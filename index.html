@@ -573,7 +573,7 @@
     function startPolling() {
       if (pollTimer) clearInterval(pollTimer);
       fetchRoomState();
-      pollTimer = setInterval(fetchRoomState, 1800);
+      pollTimer = setInterval(fetchRoomState, 3000);
     }
 
     // =========================================================================
