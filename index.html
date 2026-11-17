@@ -512,6 +512,71 @@
 
     let draftScore = 0;
     let lastKnownAppId = null;
+    let lastStarScore = -1;
+
+    // =========================================================================
+    // 1A. ESTRELLA 3D FACETADA (componente A-Frame propio)
+    //     Geometría: 10 vértices en el contorno (puntas y huecos alternos)
+    //     y dos vértices en el centro (delante y detrás) -> estrella "gema".
+    // =========================================================================
+    const STAR_IDLE = { color: "#cbd5e1", emissive: "#000000", emissiveIntensity: 0, metalness: 0.25, roughness: 0.45 };
+    const STAR_GOLD = { color: "#fbbf24", emissive: "#f59e0b", emissiveIntensity: 0.45, metalness: 0.65, roughness: 0.22 };
+    const STAR_IDLE_STR = Object.entries(STAR_IDLE).map(([k, v]) => `${k}: ${v}`).join("; ");
+
+    AFRAME.registerComponent("star-shape", {
+      schema: {
+        outer: { default: 0.26 },   // radio de las puntas
+        inner: { default: 0.11 },   // radio de los huecos
+        depth: { default: 0.09 },   // grosor hacia delante/detrás
+        color: { type: "color", default: "#e2e8f0" },
+        emissive: { type: "color", default: "#000000" },
+        emissiveIntensity: { default: 0 },
+        metalness: { default: 0.15 },
+        roughness: { default: 0.55 }
+      },
+      init() {
+        const d = this.data;
+        const rim = [];
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? d.outer : d.inner;
+          const a = Math.PI / 2 + i * Math.PI / 5;
+          rim.push([Math.cos(a) * r, Math.sin(a) * r, 0]);
+        }
+        const front = [0, 0, d.depth], back = [0, 0, -d.depth];
+        const pos = [];
+        for (let i = 0; i < 10; i++) {
+          const a = rim[i], b = rim[(i + 1) % 10];
+          pos.push(...front, ...a, ...b);   // cara delantera
+          pos.push(...back, ...b, ...a);    // cara trasera
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        geo.computeVertexNormals();
+        this.material = new THREE.MeshStandardMaterial({ flatShading: true });
+        this.el.setObject3D("mesh", new THREE.Mesh(geo, this.material));
+      },
+      update() {
+        const d = this.data, m = this.material;
+        m.color.set(d.color);
+        m.emissive.set(d.emissive);
+        m.emissiveIntensity = d.emissiveIntensity;
+        m.metalness = d.metalness;
+        m.roughness = d.roughness;
+      },
+      remove() {
+        this.el.removeObject3D("mesh");
+      }
+    });
+
+    // Al pasar el ratón / dedo por encima, la estrella crece un poco
+    AFRAME.registerComponent("hover-grow", {
+      schema: { target: { type: "selector" } },
+      init() {
+        const t = () => this.data.target;
+        this.el.addEventListener("mouseenter", () => t() && t().setAttribute("animation__hover", { property: "scale", to: "1.12 1.12 1.12", dur: 180, easing: "easeOutQuad" }));
+        this.el.addEventListener("mouseleave", () => t() && t().setAttribute("animation__hover", { property: "scale", to: "1 1 1", dur: 180, easing: "easeOutQuad" }));
+      }
+    });
 
     let roomState = {
       status: "waiting",
@@ -1235,28 +1300,61 @@
         }
       });
 
-      for (let i = 1; i <= 5; i++) {
-        const starGroup = document.getElementById(`star-group-${i}`);
-        const starConeA = document.getElementById(`star-a-${i}`);
-        const starConeB = document.getElementById(`star-b-${i}`);
-        const starRing = document.getElementById(`star-ring-${i}`);
-        const starNum = document.getElementById(`star-num-${i}`);
+      // renderUI llama aquí cada 3 s: solo se anima cuando cambia la puntuación
+      if (score === lastStarScore) return;
+      const previous = lastStarScore;
+      lastStarScore = score;
 
-        if (starGroup && starConeA && starConeB) {
-          if (i <= score) {
-            starConeA.setAttribute("color", "#f59e0b");
-            starConeB.setAttribute("color", "#fbbf24");
-            if (starRing) starRing.setAttribute("visible", "true");
-            if (starNum) starNum.setAttribute("color", "#b45309");
-            starGroup.setAttribute("scale", "1.22 1.22 1.22");
-          } else {
-            starConeA.setAttribute("color", "#cbd5e1");
-            starConeB.setAttribute("color", "#94a3b8");
-            if (starRing) starRing.setAttribute("visible", "false");
-            if (starNum) starNum.setAttribute("color", "#475569");
-            starGroup.setAttribute("scale", "1 1 1");
-          }
+      for (let i = 1; i <= 5; i++) {
+        const star = document.getElementById(`star-${i}`);
+        const pop = document.getElementById(`star-pop-${i}`);
+        const halo = document.getElementById(`star-halo-${i}`);
+        const starNum = document.getElementById(`star-num-${i}`);
+        if (!star || !pop) continue;
+
+        const lit = i <= score;
+        star.setAttribute("star-shape", lit ? STAR_GOLD : STAR_IDLE);
+        if (halo) halo.setAttribute("visible", lit);
+        if (starNum) starNum.setAttribute("color", lit ? "#b45309" : "#475569");
+
+        const wasLit = i <= previous;
+        if (lit && !wasLit) {
+          // Se enciende: efecto "pop" escalonado + chispas
+          const delay = (i - previous - 1) * 70;
+          pop.removeAttribute("animation__pop");
+          pop.setAttribute("animation__pop", {
+            property: "scale", from: "0.7 0.7 0.7", to: "1.25 1.25 1.25",
+            dur: 650, delay, easing: "easeOutElastic"
+          });
+          setTimeout(() => burstSparkles(i), delay);
+        } else if (!lit && wasLit) {
+          pop.removeAttribute("animation__pop");
+          pop.setAttribute("animation__pop", {
+            property: "scale", to: "1 1 1", dur: 250, easing: "easeOutQuad"
+          });
         }
+      }
+    }
+
+    // Chispas doradas que salen de la estrella al encenderse
+    function burstSparkles(n) {
+      const group = document.getElementById(`star-group-${n}`);
+      if (!group) return;
+      for (let k = 0; k < 8; k++) {
+        const angle = (k / 8) * Math.PI * 2 + Math.random() * 0.4;
+        const dist = 0.38 + Math.random() * 0.18;
+        const spark = document.createElement("a-entity");
+        spark.setAttribute("star-shape", { outer: 0.045, inner: 0.02, depth: 0.015, color: "#fde68a", emissive: "#f59e0b", emissiveIntensity: 1, metalness: 0.2, roughness: 0.3 });
+        spark.setAttribute("position", "0 0 0.05");
+        spark.setAttribute("animation__move", {
+          property: "position",
+          to: `${(Math.cos(angle) * dist).toFixed(3)} ${(Math.sin(angle) * dist).toFixed(3)} 0.15`,
+          dur: 600, easing: "easeOutQuad"
+        });
+        spark.setAttribute("animation__spin", { property: "rotation", to: "0 0 360", dur: 600, easing: "linear" });
+        spark.setAttribute("animation__fade", { property: "scale", from: "1 1 1", to: "0 0 0", dur: 600, delay: 150, easing: "easeInQuad" });
+        group.appendChild(spark);
+        setTimeout(() => spark.parentNode && spark.parentNode.removeChild(spark), 800);
       }
     }
 
@@ -1264,6 +1362,7 @@
     // 6. ESCENAS A-FRAME 3D (ESTRELLAS CENTRADAS SIN HIRO + PODIO ARMONIZADO)
     // =========================================================================
     function mountStudentScene() {
+      lastStarScore = -1;
       const container = document.getElementById("studentSceneContainer");
       container.innerHTML = `
         <a-scene embedded vr-mode-ui="enabled: false" cursor="rayOrigin: mouse" raycaster="objects: .clicable">
@@ -1271,21 +1370,29 @@
           <a-light type="ambient" intensity="0.95"></a-light>
           <a-light type="directional" position="2 5 4" intensity="0.85"></a-light>
 
+          <a-light type="point" position="0 1.9 -1.6" intensity="0.6" color="#fff7d6" distance="4"></a-light>
+
           <a-entity position="0 1.48 -2.65">
             ${[1, 2, 3, 4, 5].map(n => {
               const x = (n - 3) * 0.68;
+              const phase = n * 220; // cada estrella flota con un desfase distinto
               return `
                 <a-entity id="star-group-${n}" position="${x} 0 0">
                   <a-sphere class="clicable" radius="0.32" opacity="0.01" material="transparent: true"
-                    onclick="selectDraftVote(${n})"></a-sphere>
+                    hover-grow="target: #star-hover-${n}" onclick="selectDraftVote(${n})"></a-sphere>
 
-                  <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5500; easing: linear">
-                    <a-tetrahedron id="star-a-${n}" radius="0.24" color="#cbd5e1" rotation="0 0 0"></a-tetrahedron>
-                    <a-tetrahedron id="star-b-${n}" radius="0.24" color="#94a3b8" rotation="180 60 0"></a-tetrahedron>
+                  <a-circle id="star-halo-${n}" visible="false" radius="0.34" position="0 0 -0.12"
+                    material="shader: flat; color: #fde68a; transparent: true; opacity: 0.35"
+                    animation="property: material.opacity; from: 0.15; to: 0.45; dir: alternate; loop: true; dur: 900; easing: easeInOutSine"></a-circle>
+
+                  <a-entity id="star-hover-${n}">
+                    <a-entity id="star-pop-${n}">
+                      <a-entity animation__float="property: position; from: 0 -0.03 0; to: 0 0.03 0; dir: alternate; loop: true; dur: 1600; delay: ${phase}; easing: easeInOutSine">
+                        <a-entity id="star-${n}" star-shape="${STAR_IDLE_STR}"
+                          animation__spin="property: rotation; from: 0 -25 0; to: 0 25 0; dir: alternate; loop: true; dur: 2400; delay: ${phase}; easing: easeInOutSine"></a-entity>
+                      </a-entity>
+                    </a-entity>
                   </a-entity>
-
-                  <a-torus id="star-ring-${n}" visible="false" radius="0.31" radius-tubular="0.016" color="#f59e0b"
-                    rotation="25 0 0"></a-torus>
 
                   <a-text id="star-num-${n}" value="${n}" position="0 -0.46 0" align="center" color="#475569" width="5.2" font="exo2bold"></a-text>
                 </a-entity>
