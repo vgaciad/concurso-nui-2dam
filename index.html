@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concurso Interactivo NUI & RA · 2º DAM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+    }
+    a-scene {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col">
+
+  <!-- CABECERA -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 font-black flex items-center justify-center text-sm shadow-sm">
+          3D
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900">
+            CONCURSO INTERACTIVO NUI & RA · <span class="text-amber-600">2º DAM</span>
+          </h1>
+          <p class="text-xs text-slate-500">Desarrollo de Interfaces · Votación Multimodal en Tiempo Real</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <div id="syncBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+          <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="syncText">Conectando con Google Sheets...</span>
+        </div>
+
+        <span class="px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+          SALA: <span id="roomLabel">2DAM-2026</span>
+        </span>
+
+        <span id="userBadge" class="hidden px-3 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white"></span>
+
+        <button id="logoutBtn" onclick="logout()" class="hidden px-3 py-1.5 rounded-full text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 transition cursor-pointer">
+          Salir
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AVISO SI ESTÁ DENTRO DE GOOGLE SITES IFRAME -->
+  <div id="iframeWarningBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs text-amber-900">
+    ⚠️ <strong>Modo incrustado (Google Sites):</strong> El navegador puede bloquear la webcam y el micrófono dentro de un iframe. Para usar cámara y voz al 100%, ábrelo desde tu alojamiento (Vercel / GitHub Pages / Live Server).
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+    <!-- PANTALLA 1: SELECCIÓN DE ROL -->
+    <section id="loginView" class="max-w-4xl mx-auto py-6">
+      <div class="text-center mb-8">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 mb-3">
+          Sesión de Evaluación en Vivo
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Elige tu rol para entrar a la sala
+        </h2>
+        <p class="text-slate-600 mt-2 text-sm sm:text-base max-w-xl mx-auto">
+          Voto único por aplicación y dispositivo. Selecciona tu puntuación (1–5) mediante 3D, gestos o voz y confirma tu voto.
+        </p>
+      </div>
+
+      <div class="mb-6 max-w-xs mx-auto">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-center">
+          Código de Sala (Aula)
+        </label>
+        <input id="roomInput" type="text" value="2DAM-2026"
+          class="w-full text-center font-extrabold tracking-widest uppercase px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none bg-white text-slate-900" />
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Tarjeta Alumno -->
+        <div class="rounded-2xl border-2 border-slate-200 p-6 bg-white shadow-sm hover:border-slate-900 transition flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4">
+              🎓
+            </div>
+            <h3 class="text-xl font-black text-slate-900">Soy Alumno / Jurado</h3>
+            <p class="text-sm text-slate-600 mt-1">
+              Introduce tu nombre para votar cada aplicación del 1 al 5. Solo se permite un voto definitivo por app.
+            </p>
+            <div class="mt-5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Tu Nombre o Pseudónimo
+              </label>
+              <input id="studentNameInput" type="text" placeholder="Ej. Alex_Dev / María G."
+                onkeydown="if(event.key==='Enter') enterAsStudent()"
+                class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-amber-600 focus:outline-none text-slate-900 font-semibold" />
+            </div>
+          </div>
+          <button onclick="enterAsStudent()"
+            class="mt-6 w-full py-3.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
+            Entrar a Votar →
+          </button>
+        </div>
+
+        <!-- Tarjeta Profesor (PIN 3344) -->
+        <div class="rounded-2xl border-2 border-slate-900 p-6 bg-white shadow-md flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-2xl mb-4">
+              👨‍🏫
+            </div>
+            <h3 class="text-xl font-black text-slate-900">Panel de Profesor</h3>
+            <p class="text-sm text-slate-600 mt-1">
+              Gestiona las apps en caliente (crear, editar, reabrir o eliminar), controla las votaciones y muestra el podio 3D.
+            </p>
+            <div class="mt-5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Contraseña / PIN de Profesor
+              </label>
+              <input id="teacherPinInput" type="password" placeholder="Introduce el PIN"
+                onkeydown="if(event.key==='Enter') enterAsTeacher()"
+                class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-slate-900 font-semibold" />
+              <p id="teacherPinError" class="hidden text-xs font-bold text-red-600 mt-1.5">
+                ❌ Contraseña incorrecta. Prueba de nuevo.
+              </p>
+            </div>
+          </div>
+          <button onclick="enterAsTeacher()"
+            class="mt-6 w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
+            Panel de Profesor →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA 2: PANEL DEL PROFESOR -->
+    <section id="teacherView" class="hidden space-y-6">
+      <div class="grid lg:grid-cols-12 gap-6">
+        <!-- Columna Izquierda: Controles y CRUD -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="rounded-2xl border-2 border-slate-900 p-5 bg-white shadow-sm">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
+              <span>🚀</span> Lanzar Nueva App en Caliente
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Al pulsar lanzar, la pantalla de todos los alumnos cambiará al instante para votar esta app.
+            </p>
+
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nombre de la Aplicación *</label>
+                <input id="appTitleInput" type="text" placeholder="Ej. Catálogo RA Videojuegos"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:outline-none font-semibold text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Alumno / Equipo</label>
+                <input id="appAuthorInput" type="text" placeholder="Ej. Carlos y Lucía"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:outline-none font-semibold text-sm" />
+              </div>
+              <button onclick="launchNewApp()"
+                class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm transition cursor-pointer">
+                ▶ Lanzar App y Abrir Votación
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-5 bg-slate-50">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Ronda Actual</span>
+              <span id="teacherStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+                En espera
+              </span>
+            </div>
+            <h3 id="teacherCurrentTitle" class="text-xl font-black text-slate-900 mt-2">
+              Ninguna aplicación activa
+            </h3>
+            <p id="teacherCurrentAuthor" class="text-sm text-slate-600">—</p>
+
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div class="bg-white p-3 rounded-xl border border-slate-200 text-center">
+                <div id="teacherAvgScore" class="text-2xl font-black text-amber-600">0.00</div>
+                <div class="text-[11px] font-bold uppercase text-slate-500">Nota Media / 5</div>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-slate-200 text-center">
+                <div id="teacherVoteCount" class="text-2xl font-black text-slate-900">0</div>
+                <div class="text-[11px] font-bold uppercase text-slate-500">Votos Recibidos</div>
+              </div>
+            </div>
+
+            <div class="mt-4 space-y-2">
+              <button id="toggleVotingBtn" onclick="toggleVotingStatus()" disabled
+                class="w-full py-2.5 px-4 rounded-xl border-2 border-slate-900 bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-900 font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                Cerrar Votación de esta App
+              </button>
+
+              <button onclick="finishContest()"
+                class="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm transition cursor-pointer shadow-sm">
+                🏆 Fin de las Aplicaciones · Mostrar Podio RA
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 p-5 bg-white">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-black uppercase tracking-wider text-slate-900">
+                Gestión de Apps (<span id="appsCountLabel">0</span>)
+              </h3>
+              <button onclick="resetRoom()" class="text-xs font-bold text-red-600 hover:underline cursor-pointer">
+                Vaciar toda la sala
+              </button>
+            </div>
+            <div id="teacherAppsList" class="space-y-2.5 max-h-72 overflow-y-auto text-sm">
+              <p class="text-xs text-slate-400">Aún no se ha lanzado ninguna aplicación.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 flex flex-col">
+          <div class="rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-100 flex-1 min-h-[460px] relative shadow-sm">
+            <div class="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+              <span class="text-xs font-black text-slate-900">📡 Vista Proyector RA · Recuento en Directo</span>
+            </div>
+            <div id="teacherSceneContainer" class="w-full h-full min-h-[460px]"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA 3: VISTA DEL ALUMNO (VOTO ÚNICO CON CONFIRMACIÓN) -->
+    <section id="studentView" class="hidden space-y-5">
+      <div class="rounded-2xl border-2 border-slate-900 p-5 bg-white shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span id="studentRoundStatus" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-amber-100 text-amber-800 mb-1">
+            Esperando al profesor...
+          </span>
+          <h2 id="studentAppTitle" class="text-2xl sm:text-3xl font-black text-slate-900">
+            Prepárate para la siguiente presentación...
+          </h2>
+          <p id="studentAppAuthor" class="text-sm text-slate-600 mt-0.5">
+            Cuando el profesor lance una app, selecciona tu nota (1–5) y pulsa Confirmar Voto.
+          </p>
+        </div>
+
+        <div class="px-5 py-3 rounded-2xl border-2 border-slate-200 bg-slate-50 text-center min-w-[150px]">
+          <div id="studentMyVoteDisplay" class="text-2xl font-black text-amber-600">— / 5</div>
+          <div id="studentMyVoteLabel" class="text-[11px] font-bold uppercase text-slate-500">Sin voto enviado</div>
+        </div>
+      </div>
+
+      <!-- BANNER DE BLOQUEO CUANDO YA HA VOTADO ESTA APP -->
+      <div id="alreadyVotedBanner" class="hidden rounded-2xl border-2 border-emerald-600 bg-emerald-50 p-5 text-center shadow-sm">
+        <div class="text-2xl mb-1">🔒✅</div>
+        <h3 class="text-lg font-black text-emerald-950">Tu voto definitivo ya ha sido registrado</h3>
+        <p class="text-xs text-emerald-800 mt-1">
+          Solo se permite <strong>1 voto por dispositivo y aplicación</strong>. Espera a que el profesor lance la siguiente app.
+        </p>
+      </div>
+
+      <div id="studentVotingWorkspace" class="grid lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-100 min-h-[420px] relative shadow-sm">
+          <div class="absolute bottom-3 left-3 right-3 z-10 bg-white/95 backdrop-blur px-3 py-2 rounded-xl border border-slate-200 text-center shadow-sm">
+            <span class="text-xs font-bold text-slate-900">
+              👆 Paso 1: Elige del 1 al 5 (en 3D, cámara, voz o botones) · Paso 2: Pulsa Confirmar Voto
+            </span>
+          </div>
+          <div id="studentSceneContainer" class="w-full h-full min-h-[420px]"></div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-4">
+          <!-- CAJA DE CONFIRMACIÓN DE VOTO -->
+          <div class="rounded-2xl border-2 border-slate-900 p-4 bg-amber-50 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black uppercase text-slate-800">Nota Preseleccionada:</span>
+              <span id="draftScoreBadge" class="px-3 py-1 rounded-full bg-slate-900 text-amber-400 font-black text-sm">
+                Ninguna
+              </span>
+            </div>
+            <button id="confirmVoteBtn" onclick="submitConfirmedVote()" disabled
+              class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
+              ✅ Confirmar y Enviar Voto
+            </button>
+          </div>
+
+          <!-- Webcam -->
+          <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-sm font-black text-slate-900">🖐️ Seleccionar con Dedos (Webcam)</h3>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">MediaPipe</span>
+            </div>
+            <p class="text-xs text-slate-600 mb-3">
+              Levanta de <strong>1 a 5 dedos</strong> frente a la cámara durante 1 s para marcar tu nota.
+            </p>
+            <div id="webcamWrapper" class="hidden mb-3 relative rounded-xl overflow-hidden border border-slate-300 bg-black aspect-video">
+              <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
+              <div id="gestureOverlay" class="absolute bottom-2 left-2 right-2 bg-white/90 text-slate-900 text-xs font-extrabold px-3 py-1.5 rounded-lg text-center">
+                Detectando mano...
+              </div>
+            </div>
+            <button id="webcamBtn" onclick="toggleWebcam()"
+              class="w-full py-2.5 px-4 rounded-xl border-2 border-slate-900 bg-white hover:bg-slate-900 hover:text-white text-slate-900 font-bold text-xs transition cursor-pointer">
+              📷 Activar Webcam (1–5 dedos)
+            </button>
+            <p id="webcamErrorMsg" class="hidden text-xs font-semibold text-red-600 mt-2"></p>
+          </div>
+
+          <!-- Voz -->
+          <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-sm font-black text-slate-900">🎙️ Seleccionar por Voz</h3>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">Web Speech</span>
+            </div>
+            <p class="text-xs text-slate-600 mb-3">
+              Pulsa y di: <em>"uno"</em>, <em>"dos"</em>, <em>"tres"</em>, <em>"cuatro"</em> o <em>"cinco"</em>.
+            </p>
+            <button id="voiceBtn" onclick="startVoiceVote()"
+              class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition cursor-pointer">
+              🎤 Escuchar número (1–5)
+            </button>
+            <p id="voiceFeedback" class="text-xs text-center font-semibold text-slate-700 mt-2 hidden"></p>
+          </div>
+
+          <!-- Botones rápidos -->
+          <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+            <p class="text-xs font-bold text-slate-700 text-center mb-2.5">
+              Selección táctil rápida (1 a 5 estrellas):
+            </p>
+            <div class="grid grid-cols-5 gap-2">
+              <button onclick="selectDraftVote(1)" class="vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer">1★</button>
+              <button onclick="selectDraftVote(2)" class="vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer">2★</button>
+              <button onclick="selectDraftVote(3)" class="vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer">3★</button>
+              <button onclick="selectDraftVote(4)" class="vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer">4★</button>
+              <button onclick="selectDraftVote(5)" class="vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer">5★</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA 4: PODIO DEPORTIVO 3D FINAL -->
+    <section id="podiumView" class="hidden space-y-6">
+      <div class="text-center">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-100 text-amber-800 mb-2">
+          Resultados Oficiales · 2º DAM
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900">
+          🏆 Podio Final del Concurso RA & NUI
+        </h2>
+        <p class="text-sm text-slate-600 mt-1">
+          Clasificación calculada por nota media de todos los votos recibidos en sala.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-100 h-[440px] relative shadow-md">
+        <div id="podiumSceneContainer" class="w-full h-full"></div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+          <h3 class="font-black text-slate-900 text-sm uppercase tracking-wider">Clasificación Completa</h3>
+          <button id="backToTeacherBtn" onclick="reopenFromPodium()" class="hidden px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold cursor-pointer">
+            ← Volver al Panel de Profesor
+          </button>
+        </div>
+        <div id="fullRankingList" class="divide-y divide-slate-100"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE EDICIÓN DE APP -->
+  <div id="editAppModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border-2 border-slate-900 max-w-md w-full p-6 shadow-xl">
+      <h3 class="text-lg font-black text-slate-900">✏️ Editar Aplicación</h3>
+      <p class="text-xs text-slate-500 mt-0.5">Se conservarán todos los votos que ya haya recibido esta app.</p>
+      <input type="hidden" id="editAppId" />
+      <div class="mt-4 space-y-3">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nombre de la Aplicación *</label>
+          <input id="editAppTitle" type="text" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:outline-none font-semibold text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Alumno / Equipo</label>
+          <input id="editAppAuthor" type="text" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-slate-900 focus:outline-none font-semibold text-sm" />
+        </div>
+      </div>
+      <div class="mt-5 flex justify-end gap-2">
+        <button onclick="closeEditModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer">
+          Cancelar
+        </button>
+        <button onclick="saveEditedApp()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 cursor-pointer">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. CONFIGURACIÓN GOOGLE SHEETS APPS SCRIPT E IDENTIDAD DE DISPOSITIVO
+    // =========================================================================
+    const TEACHER_PIN = "3344";
+    const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbx26ZcMpyK46rNpqGAcUrWzS6N1i_qdLivBPDpUPBxRlru9QvQrDpzcWVaEyNUEuqdW/exec";
+
+    let currentRole = null;
+    let currentUser = "";
+    let roomCode = "2DAM-2026";
+    let pollTimer = null;
+    let isWriting = false;
+    let lastRenderedHash = "";
+
+    // Borrador de voto antes de pulsar "Confirmar y Enviar Voto"
+    let draftScore = 0;
+    let lastKnownAppId = null;
+
+    let roomState = {
+      status: "waiting",
+      activeAppId: null,
+      apps: {}
+    };
+
+    // Identificador único de dispositivo persistente para evitar votos duplicados
+    function getDeviceId() {
+      let devId = null;
+      try { devId = localStorage.getItem("concurso_2dam_device_id"); } catch (e) {}
+      if (!devId) {
+        devId = "dev_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+        try { localStorage.setItem("concurso_2dam_device_id", devId); } catch (e) {}
+      }
+      return devId;
+    }
+
+    function getLocalVotedApps() {
+      try {
+        return JSON.parse(localStorage.getItem("concurso_2dam_voted_apps") || "{}");
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function markAppVotedLocally(appId, score) {
+      try {
+        const voted = getLocalVotedApps();
+        voted[appId] = score;
+        localStorage.setItem("concurso_2dam_voted_apps", JSON.stringify(voted));
+      } catch (e) {}
+    }
+
+    function getCleanRoom() {
+      return roomCode.replace(/[^a-zA-Z0-9_-]/g, "").toUpperCase() || "2DAM-2026";
+    }
+
+    function setSyncStatus(ok, text) {
+      const badge = document.getElementById("syncBadge");
+      const dot = document.getElementById("syncDot");
+      const label = document.getElementById("syncText");
+      label.textContent = text;
+      if (ok) {
+        badge.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+      } else {
+        badge.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+      }
+    }
+
+    async function fetchRoomState() {
+      if (isWriting) return;
+      try {
+        const url = `${SHEETS_API_URL}?room=${encodeURIComponent(getCleanRoom())}&action=get&t=${Date.now()}`;
+        const res = await fetch(url, { redirect: "follow" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        setSyncStatus(true, "Google Sheets · Sincronizado");
+
+        if (data && typeof data === "object") {
+          roomState = {
+            status: data.status || "waiting",
+            activeAppId: data.activeAppId || null,
+            apps: data.apps || {}
+          };
+        }
+        renderUI();
+      } catch (err) {
+        setSyncStatus(false, "Reconectando Google Sheets...");
+      }
+    }
+
+    async function postToSheets(action, payload) {
+      isWriting = true;
+      try {
+        const url = `${SHEETS_API_URL}?room=${encodeURIComponent(getCleanRoom())}&action=${encodeURIComponent(action)}`;
+        const res = await fetch(url, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          if (updated && typeof updated === "object") {
+            roomState = {
+              status: updated.status || "waiting",
+              activeAppId: updated.activeAppId || null,
+              apps: updated.apps || {}
+            };
+          }
+          setSyncStatus(true, "Google Sheets · Sincronizado");
+        }
+      } catch (e) {
+        setSyncStatus(false, "Error al guardar en Sheets");
+      } finally {
+        isWriting = false;
+        renderUI();
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      fetchRoomState();
+      pollTimer = setInterval(fetchRoomState, 1800);
+    }
+
+    // =========================================================================
+    // 2. PERSISTENCIA DE SESIÓN AL REFRESCAR (F5) Y ACCESO DE ROLES
+    // =========================================================================
+    function saveSession() {
+      const payload = JSON.stringify({ role: currentRole, user: currentUser, room: roomCode });
+      try { localStorage.setItem("concurso_2dam_session", payload); } catch (e) {}
+      try { sessionStorage.setItem("concurso_2dam_session", payload); } catch (e) {}
+    }
+
+    function restoreSession() {
+      // Detectar si corre dentro de un iframe (como Google Sites)
+      if (window.self !== window.top) {
+        document.getElementById("iframeWarningBanner").classList.remove("hidden");
+      }
+
+      let raw = null;
+      try { raw = localStorage.getItem("concurso_2dam_session"); } catch (e) {}
+      if (!raw) {
+        try { raw = sessionStorage.getItem("concurso_2dam_session"); } catch (e) {}
+      }
+      if (!raw) return;
+
+      try {
+        const saved = JSON.parse(raw);
+        if (saved && saved.role && saved.room) {
+          currentRole = saved.role;
+          currentUser = saved.user || (saved.role === "teacher" ? "Profesor" : "Alumno");
+          roomCode = saved.room;
+          document.getElementById("roomInput").value = roomCode;
+          setupSessionUI();
+        }
+      } catch (e) {}
+    }
+
+    function enterAsStudent() {
+      const name = document.getElementById("studentNameInput").value.trim();
+      if (!name) {
+        alert("Por favor, escribe tu nombre o pseudónimo para entrar.");
+        return;
+      }
+      roomCode = document.getElementById("roomInput").value.trim().toUpperCase() || "2DAM-2026";
+      currentRole = "student";
+      currentUser = name;
+      draftScore = 0;
+      saveSession();
+      setupSessionUI();
+    }
+
+    function enterAsTeacher() {
+      const pinInput = document.getElementById("teacherPinInput");
+      const pinError = document.getElementById("teacherPinError");
+      if (pinInput.value.trim() !== TEACHER_PIN) {
+        pinError.classList.remove("hidden");
+        pinInput.focus();
+        return;
+      }
+      pinError.classList.add("hidden");
+      pinInput.value = "";
+      roomCode = document.getElementById("roomInput").value.trim().toUpperCase() || "2DAM-2026";
+      currentRole = "teacher";
+      currentUser = "Profesor";
+      saveSession();
+      setupSessionUI();
+    }
+
+    function setupSessionUI() {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("roomLabel").textContent = roomCode;
+      const badge = document.getElementById("userBadge");
+      badge.textContent = currentRole === "teacher" ? "👨‍🏫 Profesor" : `🎓 ${currentUser}`;
+      badge.classList.remove("hidden");
+      document.getElementById("logoutBtn").classList.remove("hidden");
+
+      if (currentRole === "teacher") {
+        document.getElementById("teacherView").classList.remove("hidden");
+        mountTeacherScene();
+      } else {
+        document.getElementById("studentView").classList.remove("hidden");
+        mountStudentScene();
+      }
+      startPolling();
+    }
+
+    function logout() {
+      if (pollTimer) clearInterval(pollTimer);
+      stopWebcam();
+      try { localStorage.removeItem("concurso_2dam_session"); } catch (e) {}
+      try { sessionStorage.removeItem("concurso_2dam_session"); } catch (e) {}
+      currentRole = null;
+      draftScore = 0;
+      lastRenderedHash = "";
+      document.getElementById("teacherView").classList.add("hidden");
+      document.getElementById("studentView").classList.add("hidden");
+      document.getElementById("podiumView").classList.add("hidden");
+      document.getElementById("userBadge").classList.add("hidden");
+      document.getElementById("logoutBtn").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+    }
+
+    // =========================================================================
+    // 3. ACCIONES Y CRUD DEL PROFESOR
+    // =========================================================================
+    async function launchNewApp() {
+      const title = document.getElementById("appTitleInput").value.trim();
+      const author = document.getElementById("appAuthorInput").value.trim() || "Equipo 2º DAM";
+      if (!title) {
+        alert("Escribe el nombre de la aplicación antes de lanzarla.");
+        return;
+      }
+      const appId = "app_" + Date.now();
+      const newApp = {
+        id: appId,
+        title,
+        author,
+        createdAt: Date.now(),
+        votes: {},
+        votedDevices: {}
+      };
+
+      document.getElementById("appTitleInput").value = "";
+      document.getElementById("appAuthorInput").value = "";
+
+      roomState.apps[appId] = newApp;
+      roomState.activeAppId = appId;
+      roomState.status = "voting";
+      renderUI();
+
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function activateExistingApp(appId) {
+      if (!roomState.apps[appId]) return;
+      roomState.activeAppId = appId;
+      roomState.status = "voting";
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    function openEditModal(appId) {
+      const app = roomState.apps[appId];
+      if (!app) return;
+      document.getElementById("editAppId").value = appId;
+      document.getElementById("editAppTitle").value = app.title;
+      document.getElementById("editAppAuthor").value = app.author;
+      document.getElementById("editAppModal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+      document.getElementById("editAppModal").classList.add("hidden");
+    }
+
+    async function saveEditedApp() {
+      const appId = document.getElementById("editAppId").value;
+      const newTitle = document.getElementById("editAppTitle").value.trim();
+      const newAuthor = document.getElementById("editAppAuthor").value.trim() || "Equipo 2º DAM";
+      if (!newTitle || !roomState.apps[appId]) return;
+
+      roomState.apps[appId].title = newTitle;
+      roomState.apps[appId].author = newAuthor;
+      closeEditModal();
+      renderUI();
+
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function deleteSingleApp(appId) {
+      const app = roomState.apps[appId];
+      if (!app) return;
+      if (!confirm(`¿Eliminar "${app.title}" y todos sus votos?`)) return;
+
+      delete roomState.apps[appId];
+      if (roomState.activeAppId === appId) {
+        roomState.activeAppId = null;
+        roomState.status = "waiting";
+      }
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function toggleVotingStatus() {
+      if (!roomState.activeAppId) return;
+      roomState.status = roomState.status === "voting" ? "closed" : "voting";
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function finishContest() {
+      const appsArr = Object.values(roomState.apps || {});
+      if (appsArr.length === 0) {
+        alert("Aún no hay aplicaciones evaluadas para mostrar el podio.");
+        return;
+      }
+      roomState.status = "podium";
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function reopenFromPodium() {
+      roomState.status = roomState.activeAppId ? "closed" : "waiting";
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    async function resetRoom() {
+      if (!confirm("¿Seguro que quieres borrar TODAS las aplicaciones y votos de esta sala?")) return;
+      roomState = { status: "waiting", activeAppId: null, apps: {} };
+      lastRenderedHash = "";
+      try { localStorage.removeItem("concurso_2dam_voted_apps"); } catch (e) {}
+      renderUI();
+      await postToSheets("replaceState", { state: roomState });
+    }
+
+    // =========================================================================
+    // 4. SELECCIÓN PREVIA Y CONFIRMACIÓN ÚNICA DE VOTO DEL ALUMNO
+    // =========================================================================
+    function sanitizeKey(str) {
+      return str.replace(/[.#$\[\]\/]/g, "_").trim();
+    }
+
+    function hasAlreadyVotedApp(app) {
+      if (!app) return false;
+      const userKey = sanitizeKey(currentUser);
+      const devId = getDeviceId();
+      const localVoted = getLocalVotedApps();
+
+      if (localVoted[app.id]) return true;
+      if (app.votes && app.votes[userKey]) return true;
+      if (app.votedDevices && app.votedDevices[devId]) return true;
+      return false;
+    }
+
+    // Paso 1: Preseleccionar puntuación (sin enviar todavía)
+    function selectDraftVote(score) {
+      if (currentRole !== "student") return;
+      const activeApp = roomState.activeAppId ? roomState.apps[roomState.activeAppId] : null;
+      if (!activeApp || roomState.status !== "voting") {
+        alert("La votación está cerrada en este momento. Espera a que el profesor abra una app.");
+        return;
+      }
+      if (hasAlreadyVotedApp(activeApp)) {
+        return;
+      }
+      draftScore = Number(score);
+      updateDraftUI();
+    }
+
+    function updateDraftUI() {
+      const badge = document.getElementById("draftScoreBadge");
+      const btn = document.getElementById("confirmVoteBtn");
+      if (draftScore >= 1 && draftScore <= 5) {
+        badge.textContent = `${draftScore} ★ / 5`;
+        btn.disabled = false;
+      } else {
+        badge.textContent = "Ninguna";
+        btn.disabled = true;
+      }
+      highlightStudentSelection(draftScore);
+    }
+
+    // Paso 2: Confirmar y enviar el voto definitivo (bloquea futuros reintentos)
+    async function submitConfirmedVote() {
+      if (currentRole !== "student") return;
+      const appId = roomState.activeAppId;
+      const activeApp = appId ? roomState.apps[appId] : null;
+
+      if (!activeApp || roomState.status !== "voting") {
+        alert("La votación está cerrada en este momento.");
+        return;
+      }
+      if (hasAlreadyVotedApp(activeApp)) {
+        alert("Ya has emitido tu voto para esta aplicación.");
+        renderUI();
+        return;
+      }
+      if (draftScore < 1 || draftScore > 5) {
+        alert("Selecciona primero una puntuación del 1 al 5.");
+        return;
+      }
+
+      const finalScore = draftScore;
+      const userKey = sanitizeKey(currentUser);
+      const deviceId = getDeviceId();
+
+      // Bloquear inmediatamente en local y en memoria
+      markAppVotedLocally(appId, finalScore);
+      if (!roomState.apps[appId].votes) roomState.apps[appId].votes = {};
+      if (!roomState.apps[appId].votedDevices) roomState.apps[appId].votedDevices = {};
+      roomState.apps[appId].votes[userKey] = finalScore;
+      roomState.apps[appId].votedDevices[deviceId] = userKey;
+
+      draftScore = 0;
+      stopWebcam();
+      renderUI();
+
+      await postToSheets("vote", { appId, userKey, deviceId, score: finalScore });
+    }
+
+    // =========================================================================
+    // 5. RENDERIZADO DE INTERFAZ Y ESCENAS 3D
+    // =========================================================================
+    function computeStats(app) {
+      const votesObj = app && app.votes ? app.votes : {};
+      const values = Object.values(votesObj).map(Number).filter(n => n >= 1 && n <= 5);
+      const count = values.length;
+      const sum = values.reduce((a, b) => a + b, 0);
+      const avg = count > 0 ? sum / count : 0;
+      return { count, sum, avg };
+    }
+
+    function renderUI() {
+      if (roomState.status === "podium") {
+        document.getElementById("teacherView").classList.add("hidden");
+        document.getElementById("studentView").classList.add("hidden");
+        document.getElementById("podiumView").classList.remove("hidden");
+        if (currentRole === "teacher") {
+          document.getElementById("backToTeacherBtn").classList.remove("hidden");
+        }
+        renderPodiumView();
+        return;
+      } else {
+        document.getElementById("podiumView").classList.add("hidden");
+        if (currentRole === "teacher") {
+          document.getElementById("teacherView").classList.remove("hidden");
+        } else if (currentRole === "student") {
+          document.getElementById("studentView").classList.remove("hidden");
+        }
+      }
+
+      const activeApp = roomState.activeAppId ? roomState.apps[roomState.activeAppId] : null;
+
+      if (currentRole === "teacher") {
+        renderTeacherUI(activeApp);
+      } else if (currentRole === "student") {
+        renderStudentUI(activeApp);
+      }
+    }
+
+    function renderTeacherUI(activeApp) {
+      const statusBadge = document.getElementById("teacherStatusBadge");
+      const toggleBtn = document.getElementById("toggleVotingBtn");
+
+      if (!activeApp) {
+        statusBadge.textContent = "En espera";
+        statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700";
+        document.getElementById("teacherCurrentTitle").textContent = "Ninguna aplicación activa";
+        document.getElementById("teacherCurrentAuthor").textContent = "Lanza una aplicación arriba para empezar";
+        document.getElementById("teacherAvgScore").textContent = "0.00";
+        document.getElementById("teacherVoteCount").textContent = "0";
+        toggleBtn.disabled = true;
+      } else {
+        const stats = computeStats(activeApp);
+        document.getElementById("teacherCurrentTitle").textContent = activeApp.title;
+        document.getElementById("teacherCurrentAuthor").textContent = `Por: ${activeApp.author}`;
+        document.getElementById("teacherAvgScore").textContent = stats.avg.toFixed(2);
+        document.getElementById("teacherVoteCount").textContent = stats.count;
+        toggleBtn.disabled = false;
+
+        if (roomState.status === "voting") {
+          statusBadge.textContent = "🟢 Votación Abierta";
+          statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
+          toggleBtn.textContent = "⏸ Cerrar Votación de esta App";
+        } else {
+          statusBadge.textContent = "🔒 Votación Cerrada";
+          statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800";
+          toggleBtn.textContent = "▶ Reabrir Votación";
+        }
+        updateTeacher3DBars(activeApp);
+      }
+
+      const appsList = Object.values(roomState.apps || {}).sort((a, b) => b.createdAt - a.createdAt);
+      document.getElementById("appsCountLabel").textContent = appsList.length;
+      const listEl = document.getElementById("teacherAppsList");
+      if (appsList.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-400">Aún no se ha lanzado ninguna aplicación.</p>`;
+      } else {
+        listEl.innerHTML = appsList.map(app => {
+          const st = computeStats(app);
+          const isCurrent = app.id === roomState.activeAppId;
+          return `
+            <div class="p-3 rounded-xl border ${isCurrent ? 'border-amber-500 bg-amber-50/60' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <div class="font-black text-slate-900 text-xs truncate">${app.title}</div>
+                <div class="text-[11px] text-slate-500 truncate">${app.author} · <strong>${st.avg.toFixed(2)}★</strong> (${st.count} votos)</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button onclick="activateExistingApp('${app.id}')" title="Activar / Reabrir votación"
+                  class="px-2 py-1 rounded-lg text-[11px] font-bold ${isCurrent && roomState.status === 'voting' ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-slate-800 hover:bg-slate-900 hover:text-white'} cursor-pointer">
+                  ${isCurrent && roomState.status === 'voting' ? 'Activa' : '▶ Abrir'}
+                </button>
+                <button onclick="openEditModal('${app.id}')" title="Editar nombre o autor"
+                  class="p-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:border-slate-900 text-xs cursor-pointer">
+                  ✏️
+                </button>
+                <button onclick="deleteSingleApp('${app.id}')" title="Eliminar aplicación"
+                  class="p-1.5 rounded-lg bg-white border border-slate-300 text-red-600 hover:bg-red-50 text-xs cursor-pointer">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    function renderStudentUI(activeApp) {
+      const roundBadge = document.getElementById("studentRoundStatus");
+      const titleEl = document.getElementById("studentAppTitle");
+      const authorEl = document.getElementById("studentAppAuthor");
+      const myVoteDisplay = document.getElementById("studentMyVoteDisplay");
+      const myVoteLabel = document.getElementById("studentMyVoteLabel");
+      const alreadyBanner = document.getElementById("alreadyVotedBanner");
+      const workspace = document.getElementById("studentVotingWorkspace");
+
+      // Si el profesor cambió a otra app nueva, limpiamos el borrador anterior
+      if ((activeApp ? activeApp.id : null) !== lastKnownAppId) {
+        lastKnownAppId = activeApp ? activeApp.id : null;
+        draftScore = 0;
+        updateDraftUI();
+      }
+
+      if (!activeApp || roomState.status === "waiting") {
+        roundBadge.textContent = "⏳ Esperando al profesor";
+        roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-slate-200 text-slate-700 mb-1";
+        titleEl.textContent = "Prepárate para la siguiente presentación...";
+        authorEl.textContent = "En cuanto el profesor lance la app aparecerá aquí.";
+        myVoteDisplay.textContent = "— / 5";
+        myVoteLabel.textContent = "Sin ronda activa";
+        alreadyBanner.classList.add("hidden");
+        workspace.classList.remove("hidden");
+        highlightStudentSelection(0);
+        return;
+      }
+
+      titleEl.textContent = activeApp.title;
+      authorEl.textContent = `Presentado por: ${activeApp.author}`;
+
+      const userKey = sanitizeKey(currentUser);
+      const localVoted = getLocalVotedApps();
+      const confirmedScore = (activeApp.votes && activeApp.votes[userKey])
+        ? Number(activeApp.votes[userKey])
+        : (localVoted[activeApp.id] ? Number(localVoted[activeApp.id]) : 0);
+
+      const voted = hasAlreadyVotedApp(activeApp);
+
+      if (voted) {
+        roundBadge.textContent = "✅ Voto Emitido";
+        roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800 mb-1";
+        myVoteDisplay.textContent = confirmedScore > 0 ? `${confirmedScore} ★ / 5` : "Enviado ✓";
+        myVoteLabel.textContent = "Voto definitivo bloqueado";
+        alreadyBanner.classList.remove("hidden");
+        workspace.classList.add("hidden");
+        return;
+      }
+
+      alreadyBanner.classList.add("hidden");
+      workspace.classList.remove("hidden");
+
+      if (roomState.status === "voting") {
+        roundBadge.textContent = "🟢 Votación Abierta (1 a 5)";
+        roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800 mb-1";
+        myVoteDisplay.textContent = draftScore > 0 ? `${draftScore} ★ (Borrador)` : "— / 5";
+        myVoteLabel.textContent = draftScore > 0 ? "Pulsa Confirmar Voto" : "Pendiente de votar";
+      } else {
+        roundBadge.textContent = "🔒 Votación Cerrada";
+        roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-red-100 text-red-800 mb-1";
+        myVoteDisplay.textContent = "— / 5";
+        myVoteLabel.textContent = "Ronda cerrada";
+      }
+
+      updateDraftUI();
+    }
+
+    function highlightStudentSelection(score) {
+      document.querySelectorAll(".vote-btn").forEach((btn, idx) => {
+        const val = idx + 1;
+        if (val === score) {
+          btn.className = "vote-btn py-3 rounded-xl border-2 border-slate-900 bg-amber-400 font-black text-sm text-slate-950 transition cursor-pointer shadow-sm";
+        } else {
+          btn.className = "vote-btn py-3 rounded-xl border-2 border-slate-300 bg-white hover:border-amber-500 font-black text-sm text-slate-900 transition cursor-pointer";
+        }
+      });
+
+      for (let i = 1; i <= 5; i++) {
+        const crystal = document.getElementById(`crystal-${i}`);
+        if (crystal) {
+          if (i <= score) {
+            crystal.setAttribute("color", "#f59e0b");
+            crystal.setAttribute("scale", "1.2 1.2 1.2");
+          } else {
+            crystal.setAttribute("color", "#cbd5e1");
+            crystal.setAttribute("scale", "1 1 1");
+          }
+        }
+      }
+    }
+
+    // =========================================================================
+    // 6. ESCENAS A-FRAME 3D
+    // =========================================================================
+    function mountStudentScene() {
+      const container = document.getElementById("studentSceneContainer");
+      container.innerHTML = `
+        <a-scene embedded vr-mode-ui="enabled: false" cursor="rayOrigin: mouse" raycaster="objects: .clicable">
+          <a-sky color="#f8fafc"></a-sky>
+          <a-light type="ambient" intensity="0.9"></a-light>
+          <a-light type="directional" position="2 4 3" intensity="0.8"></a-light>
+
+          <a-plane position="0 0 -3.2" rotation="-55 0 0" width="4.2" height="2.6" color="#0f172a"></a-plane>
+          <a-plane position="0 0.01 -3.2" rotation="-55 0 0" width="3.5" height="2.0" color="#ffffff"></a-plane>
+          <a-text value="HIRO · ELIGE DEL 1 AL 5" position="0 0.15 -2.2" rotation="-35 0 0" align="center" color="#0f172a" width="4"></a-text>
+
+          ${[1, 2, 3, 4, 5].map(n => {
+            const x = (n - 3) * 0.72;
+            return `
+              <a-entity position="${x} 0.9 -3.1">
+                <a-octahedron id="crystal-${n}" class="clicable" radius="0.28" color="#cbd5e1"
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear"
+                  onclick="selectDraftVote(${n})">
+                </a-octahedron>
+                <a-text value="${n}" position="0 -0.48 0.1" align="center" color="#0f172a" width="4.5"></a-text>
+              </a-entity>
+            `;
+          }).join("")}
+
+          <a-entity camera position="0 1.4 0"></a-entity>
+        </a-scene>
+      `;
+    }
+
+    function mountTeacherScene() {
+      const container = document.getElementById("teacherSceneContainer");
+      container.innerHTML = `
+        <a-scene embedded vr-mode-ui="enabled: false">
+          <a-sky color="#f8fafc"></a-sky>
+          <a-light type="ambient" intensity="0.9"></a-light>
+          <a-light type="directional" position="2 5 3" intensity="0.8"></a-light>
+
+          <a-box position="0 0 -3.5" width="4.6" height="0.1" depth="2.4" color="#0f172a"></a-box>
+          <a-box position="0 0.06 -3.5" width="4.0" height="0.05" depth="1.9" color="#ffffff"></a-box>
+
+          ${[1, 2, 3, 4, 5].map(n => {
+            const x = (n - 3) * 0.75;
+            return `
+              <a-entity position="${x} 0.1 -3.5">
+                <a-box id="tbar-${n}" position="0 0.1 0" width="0.45" height="0.2" depth="0.45" color="#f59e0b"></a-box>
+                <a-text id="tlabel-${n}" value="${n}★ (0)" position="0 -0.02 0.75" rotation="-30 0 0" align="center" color="#0f172a" width="3.2"></a-text>
+              </a-entity>
+            `;
+          }).join("")}
+
+          <a-entity camera position="0 1.8 0.2" rotation="-12 0 0"></a-entity>
+        </a-scene>
+      `;
+    }
+
+    function updateTeacher3DBars(activeApp) {
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const votes = activeApp && activeApp.votes ? Object.values(activeApp.votes) : [];
+      votes.forEach(v => {
+        const n = Number(v);
+        if (counts[n] !== undefined) counts[n]++;
+      });
+      const maxCount = Math.max(1, ...Object.values(counts));
+
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.getElementById(`tbar-${i}`);
+        const lbl = document.getElementById(`tlabel-${i}`);
+        if (bar && lbl) {
+          const h = 0.15 + (counts[i] / maxCount) * 1.6;
+          bar.setAttribute("height", h.toFixed(2));
+          bar.setAttribute("position", `0 ${(h / 2).toFixed(2)} 0`);
+          lbl.setAttribute("value", `${i}★ (${counts[i]})`);
+        }
+      }
+    }
+
+    function renderPodiumView() {
+      const apps = Object.values(roomState.apps || {}).map(app => {
+        const st = computeStats(app);
+        return { ...app, ...st };
+      });
+
+      apps.sort((a, b) => (b.avg - a.avg) || (b.sum - a.sum));
+
+      const hash = JSON.stringify(apps.map(a => [a.id, a.title, a.avg.toFixed(2), a.count]));
+      if (hash === lastRenderedHash) return;
+      lastRenderedHash = hash;
+
+      const first = apps[0] || { title: "—", author: "", avg: 0 };
+      const second = apps[1] || { title: "—", author: "", avg: 0 };
+      const third = apps[2] || { title: "—", author: "", avg: 0 };
+
+      const container = document.getElementById("podiumSceneContainer");
+      container.innerHTML = `
+        <a-scene embedded vr-mode-ui="enabled: false">
+          <a-sky color="#f8fafc"></a-sky>
+          <a-light type="ambient" intensity="0.95"></a-light>
+          <a-light type="directional" position="3 6 4" intensity="0.85"></a-light>
+
+          <a-box position="0 0 -4.2" width="5.4" height="0.12" depth="2.6" color="#0f172a"></a-box>
+          <a-box position="0 0.07 -4.2" width="4.8" height="0.04" depth="2.1" color="#ffffff"></a-box>
+
+          <a-entity position="-1.45 0.1 -4.2">
+            <a-box position="0 0.55 0" width="1.15" height="1.1" depth="1.0" color="#94a3b8"></a-box>
+            <a-text value="2º PLATA" position="0 0.65 0.52" align="center" color="#ffffff" width="4"></a-text>
+            <a-text value="${second.title}\n(${second.avg.toFixed(2)} ★)" position="0 1.55 0" align="center" color="#0f172a" width="3.4"></a-text>
+          </a-entity>
+
+          <a-entity position="0 0.1 -4.2">
+            <a-box position="0 0.85 0" width="1.3" height="1.7" depth="1.1" color="#f59e0b"></a-box>
+            <a-text value="1º ORO" position="0 0.95 0.57" align="center" color="#0f172a" width="4.5"></a-text>
+            <a-octahedron position="0 2.05 0" radius="0.22" color="#f59e0b"
+              animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"></a-octahedron>
+            <a-text value="${first.title}\n(${first.avg.toFixed(2)} ★)" position="0 2.65 0" align="center" color="#0f172a" width="4"></a-text>
+          </a-entity>
+
+          <a-entity position="1.45 0.1 -4.2">
+            <a-box position="0 0.4 0" width="1.15" height="0.8" depth="1.0" color="#b45309"></a-box>
+            <a-text value="3º BRONCE" position="0 0.45 0.52" align="center" color="#ffffff" width="3.8"></a-text>
+            <a-text value="${third.title}\n(${third.avg.toFixed(2)} ★)" position="0 1.25 0" align="center" color="#0f172a" width="3.4"></a-text>
+          </a-entity>
+
+          <a-entity camera position="0 1.9 0.4" rotation="-10 0 0"></a-entity>
+        </a-scene>
+      `;
+
+      const rankingEl = document.getElementById("fullRankingList");
+      rankingEl.innerHTML = apps.map((app, index) => {
+        const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+        return `
+          <div class="px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-xl font-black w-8 text-center">${medal}</span>
+              <div>
+                <div class="font-black text-slate-900 text-sm">${app.title}</div>
+                <div class="text-xs text-slate-500">${app.author} · ${app.count} votos</div>
+              </div>
+            </div>
+            <div class="text-base font-black text-amber-600">${app.avg.toFixed(2)} / 5 ★</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 7. VOTO POR VOZ Y GESTOS WEBCAM (PRESELECCIONA PARA CONFIRMAR)
+    // =========================================================================
+    function startVoiceVote() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const fb = document.getElementById("voiceFeedback");
+      if (!SpeechRecognition) {
+        fb.textContent = "⚠️ Este navegador no soporta Web Speech API (usa Chrome o Edge).";
+        fb.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "es-ES";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 3;
+
+        fb.textContent = "🎙️ Escuchando... di: uno, dos, tres, cuatro o cinco";
+        fb.classList.remove("hidden");
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript.toLowerCase();
+          let detected = 0;
+          if (/\b(1|uno|un)\b/.test(transcript)) detected = 1;
+          else if (/\b(2|dos)\b/.test(transcript)) detected = 2;
+          else if (/\b(3|tres)\b/.test(transcript)) detected = 3;
+          else if (/\b(4|cuatro)\b/.test(transcript)) detected = 4;
+          else if (/\b(5|cinco)\b/.test(transcript)) detected = 5;
+
+          if (detected > 0) {
+            selectDraftVote(detected);
+            fb.textContent = `✅ Detectado "${transcript}" (${detected}★). Pulsa Confirmar Voto arriba.`;
+          } else {
+            fb.textContent = `⚠️ Escuché "${transcript}". Di "uno", "dos", "tres", "cuatro" o "cinco".`;
+          }
+        };
+
+        recognition.onerror = (err) => {
+          if (err.error === "not-allowed") {
+            fb.textContent = "🚫 Micrófono bloqueado por Google Sites (iframe). Ábrelo en Vercel / Live Server.";
+          } else {
+            fb.textContent = `⚠️ Error de voz (${err.error}). Inténtalo de nuevo.`;
+          }
+        };
+
+        recognition.start();
+      } catch (e) {
+        fb.textContent = "🚫 El navegador bloqueó el acceso al micrófono en este contexto.";
+        fb.classList.remove("hidden");
+      }
+    }
+
+    let webcamStream = null;
+    let handLandmarker = null;
+    let rafId = null;
+    let holdFingerCount = 0;
+    let holdStartTime = 0;
+
+    async function toggleWebcam() {
+      const errEl = document.getElementById("webcamErrorMsg");
+      errEl.classList.add("hidden");
+
+      if (webcamStream) {
+        stopWebcam();
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        errEl.textContent = "🚫 Tu navegador o el iframe de Google Sites no permite acceso a la cámara.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      const overlay = document.getElementById("gestureOverlay");
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        const video = document.getElementById("webcamVideo");
+        video.srcObject = webcamStream;
+        document.getElementById("webcamWrapper").classList.remove("hidden");
+        document.getElementById("webcamBtn").textContent = "⏹ Detener Webcam";
+        overlay.textContent = "Cargando detector de dedos...";
+
+        if (!handLandmarker) {
+          const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3");
+          const filesetResolver = await vision.FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+          );
+          handLandmarker = await vision.HandLandmarker.createFromOptions(filesetResolver, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+              delegate: "GPU"
+            },
+            runningMode: "VIDEO",
+            numHands: 1
+          });
+        }
+        detectHandsLoop();
+      } catch (err) {
+        errEl.textContent = "🚫 Cámara bloqueada por Google Sites (iframe) o permiso denegado. Ábrelo desde Vercel / Live Server.";
+        errEl.classList.remove("hidden");
+        stopWebcam();
+      }
+    }
+
+    function stopWebcam() {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(t => t.stop());
+        webcamStream = null;
+      }
+      document.getElementById("webcamWrapper").classList.add("hidden");
+      document.getElementById("webcamBtn").textContent = "📷 Activar Webcam (1–5 dedos)";
+    }
+
+    function countRaisedFingers(landmarks) {
+      let count = 0;
+      const tips = [8, 12, 16, 20];
+      const pips = [6, 10, 14, 18];
+      for (let i = 0; i < 4; i++) {
+        if (landmarks[tips[i]].y < landmarks[pips[i]].y) count++;
+      }
+      if (Math.abs(landmarks[4].x - landmarks[2].x) > 0.06) count++;
+      return Math.min(5, Math.max(0, count));
+    }
+
+    function detectHandsLoop() {
+      const video = document.getElementById("webcamVideo");
+      const overlay = document.getElementById("gestureOverlay");
+      if (!webcamStream || !handLandmarker) return;
+
+      if (video.readyState >= 2) {
+        const results = handLandmarker.detectForVideo(video, performance.now());
+        if (results.landmarks && results.landmarks.length > 0) {
+          const fingers = countRaisedFingers(results.landmarks[0]);
+          if (fingers >= 1 && fingers <= 5) {
+            if (fingers === holdFingerCount) {
+              const elapsed = performance.now() - holdStartTime;
+              const pct = Math.min(100, Math.round((elapsed / 1000) * 100));
+              overlay.textContent = `✋ ${fingers} dedo(s) · Marcando nota ${pct}%`;
+              if (elapsed >= 1000) {
+                selectDraftVote(fingers);
+                overlay.textContent = `✅ Nota ${fingers}★ marcada. Pulsa Confirmar Voto.`;
+                holdStartTime = performance.now() + 1200;
+              }
+            } else {
+              holdFingerCount = fingers;
+              holdStartTime = performance.now();
+              overlay.textContent = `✋ ${fingers} dedo(s) · Mantén 1 s...`;
+            }
+          } else {
+            holdFingerCount = 0;
+            overlay.textContent = "Levanta entre 1 y 5 dedos";
+          }
+        } else {
+          holdFingerCount = 0;
+          overlay.textContent = "Muestra tu mano frente a la cámara";
+        }
+      }
+      rafId = requestAnimationFrame(detectHandsLoop);
+    }
+
+    window.addEventListener("DOMContentLoaded", restoreSession);
+  </script>
+</body>
+</html>
