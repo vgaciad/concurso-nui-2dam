@@ -61,17 +61,17 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
 
-    <!-- PANTALLA 1: SELECCIÓN DE ROL -->
-    <section id="loginView" class="max-w-4xl mx-auto py-6">
-      <div class="text-center mb-8">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 mb-3">
-          Sesión de Evaluación en Vivo
+    <!-- PANTALLA 1: SELECCIÓN DE ROL CON CAPTCHA DE SEGURIDAD -->
+    <section id="loginView" class="max-w-4xl mx-auto py-4">
+      <div class="text-center mb-6">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 mb-2">
+          Acceso Verificado · Aula 2º DAM
         </span>
         <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
           Elige tu rol para entrar a la sala
         </h2>
-        <p class="text-slate-600 mt-2 text-sm sm:text-base max-w-xl mx-auto">
-          Voto único por aplicación y dispositivo. Selecciona tu puntuación (1–5) mediante 3D, gestos o voz y confirma tu voto.
+        <p class="text-slate-600 mt-1.5 text-sm max-w-xl mx-auto">
+          Voto único por aplicación y dispositivo. Completa la verificación visual para evitar accesos automatizados.
         </p>
       </div>
 
@@ -80,60 +80,105 @@
           Código de Sala (Aula)
         </label>
         <input id="roomInput" type="text" value="2DAM-2026"
-          class="w-full text-center font-extrabold tracking-widest uppercase px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none bg-white text-slate-900" />
+          class="w-full text-center font-extrabold tracking-widest uppercase px-4 py-2 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none bg-white text-slate-900" />
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Tarjeta Alumno -->
+        <!-- Tarjeta Alumno con Captcha -->
         <div class="rounded-2xl border-2 border-slate-200 p-6 bg-white shadow-sm hover:border-slate-900 transition flex flex-col justify-between">
           <div>
-            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4">
-              🎓
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl">🎓</div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">1 Voto / Dispositivo</span>
             </div>
             <h3 class="text-xl font-black text-slate-900">Soy Alumno / Jurado</h3>
-            <p class="text-sm text-slate-600 mt-1">
-              Introduce tu nombre para votar cada aplicación del 1 al 5. Solo se permite un voto definitivo por app.
+            <p class="text-xs text-slate-600 mt-1">
+              Introduce tu nombre real y resuelve el código visual para entrar a votar.
             </p>
-            <div class="mt-5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Tu Nombre o Pseudónimo
-              </label>
-              <input id="studentNameInput" type="text" placeholder="Ej. Alex_Dev / María G."
-                onkeydown="if(event.key==='Enter') enterAsStudent()"
-                class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-amber-600 focus:outline-none text-slate-900 font-semibold" />
+
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Tu Nombre y Apellido *
+                </label>
+                <input id="studentNameInput" type="text" placeholder="Ej. Laura Martínez"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 focus:border-amber-600 focus:outline-none text-slate-900 font-semibold text-sm" />
+              </div>
+
+              <!-- CAPTCHA ALUMNO -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Verificación Anti-Bot (Escribe los 4 caracteres)
+                </label>
+                <div class="flex items-center gap-2">
+                  <canvas id="studentCaptchaCanvas" width="130" height="42" class="rounded-lg border border-slate-300 bg-white shrink-0"></canvas>
+                  <button type="button" onclick="refreshCaptcha('student')" title="Generar nuevo código"
+                    class="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">
+                    🔄
+                  </button>
+                  <input id="studentCaptchaInput" type="text" maxlength="4" placeholder="Código"
+                    onkeydown="if(event.key==='Enter') enterAsStudent()"
+                    class="w-full uppercase font-black tracking-widest text-center px-3 py-2 rounded-lg border-2 border-slate-300 focus:border-amber-600 focus:outline-none text-sm" />
+                </div>
+                <p id="studentCaptchaError" class="hidden text-xs font-bold text-red-600 mt-1.5">
+                  ❌ Código captcha incorrecto. Inténtalo de nuevo.
+                </p>
+              </div>
             </div>
           </div>
+
           <button onclick="enterAsStudent()"
-            class="mt-6 w-full py-3.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
-            Entrar a Votar →
+            class="mt-5 w-full py-3.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
+            Verificar y Entrar a Votar →
           </button>
         </div>
 
-        <!-- Tarjeta Profesor (PIN 3344) -->
+        <!-- Tarjeta Profesor con PIN validado en servidor + Captcha -->
         <div class="rounded-2xl border-2 border-slate-900 p-6 bg-white shadow-md flex flex-col justify-between">
           <div>
-            <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-2xl mb-4">
-              👨‍🏫
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center text-2xl">👨‍🏫</div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-900 text-amber-400">Validación Servidor</span>
             </div>
             <h3 class="text-xl font-black text-slate-900">Panel de Profesor</h3>
-            <p class="text-sm text-slate-600 mt-1">
-              Gestiona las apps en caliente (crear, editar, reabrir o eliminar), controla las votaciones y muestra el podio 3D.
+            <p class="text-xs text-slate-600 mt-1">
+              El PIN se valida directamente contra Google Sheets para impedir accesos desde el inspector del navegador.
             </p>
-            <div class="mt-5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Contraseña / PIN de Profesor
-              </label>
-              <input id="teacherPinInput" type="password" placeholder="Introduce el PIN"
-                onkeydown="if(event.key==='Enter') enterAsTeacher()"
-                class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-slate-900 font-semibold" />
-              <p id="teacherPinError" class="hidden text-xs font-bold text-red-600 mt-1.5">
-                ❌ Contraseña incorrecta. Prueba de nuevo.
-              </p>
+
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  PIN de Profesor *
+                </label>
+                <input id="teacherPinInput" type="password" placeholder="Introduce el PIN docente"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-slate-900 font-semibold text-sm" />
+              </div>
+
+              <!-- CAPTCHA PROFESOR -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Verificación de Seguridad Docente
+                </label>
+                <div class="flex items-center gap-2">
+                  <canvas id="teacherCaptchaCanvas" width="130" height="42" class="rounded-lg border border-slate-300 bg-white shrink-0"></canvas>
+                  <button type="button" onclick="refreshCaptcha('teacher')" title="Generar nuevo código"
+                    class="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">
+                    🔄
+                  </button>
+                  <input id="teacherCaptchaInput" type="text" maxlength="4" placeholder="Código"
+                    onkeydown="if(event.key==='Enter') enterAsTeacher()"
+                    class="w-full uppercase font-black tracking-widest text-center px-3 py-2 rounded-lg border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-sm" />
+                </div>
+                <p id="teacherPinError" class="hidden text-xs font-bold text-red-600 mt-1.5">
+                  ❌ PIN o código captcha incorrecto.
+                </p>
+              </div>
             </div>
           </div>
-          <button onclick="enterAsTeacher()"
-            class="mt-6 w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
-            Panel de Profesor →
+
+          <button id="teacherLoginBtn" onclick="enterAsTeacher()"
+            class="mt-5 w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
+            Validar en Servidor y Entrar →
           </button>
         </div>
       </div>
@@ -181,7 +226,6 @@
             </h3>
             <p id="teacherCurrentAuthor" class="text-sm text-slate-600">—</p>
 
-            <!-- 3 INDICADORES: PUNTOS TOTALES (CRITERIO GANADOR), MEDIA Y VOTOS RECIBIDOS -->
             <div class="grid grid-cols-3 gap-2.5 mt-4">
               <div class="bg-amber-50 p-3 rounded-xl border-2 border-amber-400 text-center">
                 <div id="teacherTotalPoints" class="text-2xl font-black text-amber-700">0</div>
@@ -282,7 +326,6 @@
         </div>
 
         <div class="lg:col-span-5 space-y-4">
-          <!-- CAJA DE CONFIRMACIÓN DE VOTO -->
           <div class="rounded-2xl border-2 border-slate-900 p-4 bg-amber-50 shadow-sm">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs font-black uppercase text-slate-800">Nota Preseleccionada:</span>
@@ -296,7 +339,6 @@
             </button>
           </div>
 
-          <!-- Webcam -->
           <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
             <div class="flex items-center justify-between mb-1">
               <h3 class="text-sm font-black text-slate-900">🖐️ Seleccionar con Dedos (Webcam)</h3>
@@ -319,7 +361,6 @@
             <p id="webcamErrorMsg" class="hidden text-xs font-semibold text-red-600 mt-2"></p>
           </div>
 
-          <!-- Voz Mejorada con Estrellas Visuales -->
           <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
             <div class="flex items-center justify-between mb-1">
               <h3 class="text-sm font-black text-slate-900">🎙️ Seleccionar por Voz</h3>
@@ -333,7 +374,6 @@
               <span>🎤</span> <span id="voiceBtnLabel">Pulsar y decir número (1–5)</span>
             </button>
 
-            <!-- Cartel visual de resultado de voz -->
             <div id="voiceResultCard" class="hidden mt-3 p-3 rounded-xl border-2 border-amber-400 bg-amber-50 text-center">
               <div id="voiceSpokenText" class="text-xs font-extrabold text-slate-800">Usted dijo: 3</div>
               <div id="voiceStarsVisual" class="text-2xl tracking-widest text-amber-500 mt-0.5">★★★☆☆</div>
@@ -343,7 +383,6 @@
             <p id="voiceFeedback" class="text-xs text-center font-semibold text-slate-700 mt-2 hidden"></p>
           </div>
 
-          <!-- Botones rápidos -->
           <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
             <p class="text-xs font-bold text-slate-700 text-center mb-2.5">
               Selección táctil rápida (1 a 5 estrellas):
@@ -384,7 +423,6 @@
         </div>
       </div>
 
-      <!-- ESCENARIO RA / 3D ÉPICO CON PERSPECTIVA SALIENDO DE LA PANTALLA -->
       <div class="rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-950 h-[520px] relative shadow-xl">
         <video id="podiumArVideo" autoplay playsinline muted class="hidden absolute inset-0 w-full h-full object-cover z-0"></video>
 
@@ -397,7 +435,6 @@
         <div id="podiumSceneContainer" class="w-full h-full relative z-10"></div>
       </div>
 
-      <!-- INFORME FINAL COMPLETO (PUNTOS TOTALES, NOTA MEDIA Y VOTOS RECIBIDOS) -->
       <div class="rounded-2xl border-2 border-slate-900 bg-white overflow-hidden shadow-sm">
         <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -454,13 +491,13 @@
 
   <script>
     // =========================================================================
-    // 1. CONFIGURACIÓN GOOGLE SHEETS APPS SCRIPT E IDENTIDAD DE DISPOSITIVO
+    // 1. CONFIGURACIÓN GOOGLE SHEETS Y SEGURIDAD (SIN PIN EN EL CÓDIGO FUENTE)
     // =========================================================================
-    const TEACHER_PIN = "3344";
     const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbx26ZcMpyK46rNpqGAcUrWzS6N1i_qdLivBPDpUPBxRlru9QvQrDpzcWVaEyNUEuqdW/exec";
 
     let currentRole = null;
     let currentUser = "";
+    let verifiedTeacherPin = ""; // Solo se guarda en memoria tras validarlo el servidor
     let roomCode = "2DAM-2026";
     let pollTimer = null;
     let isWriting = false;
@@ -474,6 +511,57 @@
       activeAppId: null,
       apps: {}
     };
+
+    // =========================================================================
+    // 1B. CAPTCHA VISUAL CANVAS ANTI-BOT PARA ALUMNO Y PROFESOR
+    // =========================================================================
+    const captchaCodes = { student: "", teacher: "" };
+    const pageLoadTimestamp = Date.now();
+
+    function generateCaptchaText() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let res = "";
+      for (let i = 0; i < 4; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return res;
+    }
+
+    function refreshCaptcha(type) {
+      const code = generateCaptchaText();
+      captchaCodes[type] = code;
+      const canvas = document.getElementById(type === "student" ? "studentCaptchaCanvas" : "teacherCaptchaCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Líneas de ruido para impedir lectura automática OCR
+      for (let i = 0; i < 5; i++) {
+        ctx.strokeStyle = i % 2 === 0 ? "#cbd5e1" : "#fcd34d";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+      }
+
+      // Letras rotadas
+      ctx.font = "900 22px Inter, sans-serif";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i < code.length; i++) {
+        ctx.save();
+        const x = 18 + i * 26;
+        const y = 21 + (Math.random() * 6 - 3);
+        const angle = (Math.random() - 0.5) * 0.45;
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = i % 2 === 0 ? "#0f172a" : "#b45309";
+        ctx.fillText(code[i], 0, 0);
+        ctx.restore();
+      }
+    }
 
     function getDeviceId() {
       let devId = null;
@@ -545,15 +633,21 @@
       isWriting = true;
       try {
         const url = `${SHEETS_API_URL}?room=${encodeURIComponent(getCleanRoom())}&action=${encodeURIComponent(action)}`;
+        const bodyData = currentRole === "teacher" ? { ...payload, pin: verifiedTeacherPin } : payload;
         const res = await fetch(url, {
           method: "POST",
           redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(bodyData)
         });
         if (res.ok) {
-          const updated = await res.json();
-          if (updated && typeof updated === "object") {
+          const resp = await res.json();
+          if (resp && resp.ok === false) {
+            alert("⛔ Acción rechazada por el servidor: " + (resp.error || "No autorizado"));
+            return resp;
+          }
+          const updated = resp.state ? resp.state : resp;
+          if (updated && typeof updated === "object" && updated.apps !== undefined) {
             roomState = {
               status: updated.status || "waiting",
               activeAppId: updated.activeAppId || null,
@@ -561,6 +655,7 @@
             };
           }
           setSyncStatus(true, "Google Sheets · Sincronizado");
+          return resp;
         }
       } catch (e) {
         setSyncStatus(false, "Error al guardar en Sheets");
@@ -568,24 +663,34 @@
         isWriting = false;
         renderUI();
       }
+      return null;
     }
 
     function startPolling() {
       if (pollTimer) clearInterval(pollTimer);
       fetchRoomState();
+      // 3000 ms óptimo para 26 alumnos concurrentes en Wi-Fi de instituto
       pollTimer = setInterval(fetchRoomState, 3000);
     }
 
     // =========================================================================
-    // 2. PERSISTENCIA DE SESIÓN AL REFRESCAR (F5) Y ACCESO DE ROLES
+    // 2. PERSISTENCIA DE SESIÓN AL REFRESCAR (F5) Y VALIDACIÓN DE ROLES
     // =========================================================================
     function saveSession() {
-      const payload = JSON.stringify({ role: currentRole, user: currentUser, room: roomCode });
+      const payload = JSON.stringify({
+        role: currentRole,
+        user: currentUser,
+        room: roomCode,
+        tp: currentRole === "teacher" ? verifiedTeacherPin : ""
+      });
       try { localStorage.setItem("concurso_2dam_session", payload); } catch (e) {}
       try { sessionStorage.setItem("concurso_2dam_session", payload); } catch (e) {}
     }
 
     function restoreSession() {
+      refreshCaptcha("student");
+      refreshCaptcha("teacher");
+
       let raw = null;
       try { raw = localStorage.getItem("concurso_2dam_session"); } catch (e) {}
       if (!raw) {
@@ -596,8 +701,10 @@
       try {
         const saved = JSON.parse(raw);
         if (saved && saved.role && saved.room) {
+          if (saved.role === "teacher" && !saved.tp) return;
           currentRole = saved.role;
           currentUser = saved.user || (saved.role === "teacher" ? "Profesor" : "Alumno");
+          verifiedTeacherPin = saved.tp || "";
           roomCode = saved.room;
           document.getElementById("roomInput").value = roomCode;
           setupSessionUI();
@@ -607,10 +714,25 @@
 
     function enterAsStudent() {
       const name = document.getElementById("studentNameInput").value.trim();
-      if (!name) {
-        alert("Por favor, escribe tu nombre o pseudónimo para entrar.");
+      const capInput = document.getElementById("studentCaptchaInput").value.trim().toUpperCase();
+      const capErr = document.getElementById("studentCaptchaError");
+
+      if (!name || name.length < 3) {
+        alert("Escribe tu nombre y apellido reales (mínimo 3 letras) para entrar.");
         return;
       }
+      if (Date.now() - pageLoadTimestamp < 1200) {
+        alert("Espera un instante antes de enviar.");
+        return;
+      }
+      if (capInput !== captchaCodes.student) {
+        capErr.classList.remove("hidden");
+        document.getElementById("studentCaptchaInput").value = "";
+        refreshCaptcha("student");
+        return;
+      }
+
+      capErr.classList.add("hidden");
       roomCode = document.getElementById("roomInput").value.trim().toUpperCase() || "2DAM-2026";
       currentRole = "student";
       currentUser = name;
@@ -619,21 +741,68 @@
       setupSessionUI();
     }
 
-    function enterAsTeacher() {
+    async function enterAsTeacher() {
       const pinInput = document.getElementById("teacherPinInput");
+      const capInput = document.getElementById("teacherCaptchaInput");
       const pinError = document.getElementById("teacherPinError");
-      if (pinInput.value.trim() !== TEACHER_PIN) {
+      const loginBtn = document.getElementById("teacherLoginBtn");
+
+      const enteredPin = pinInput.value.trim();
+      const enteredCap = capInput.value.trim().toUpperCase();
+
+      if (enteredCap !== captchaCodes.teacher || !enteredPin) {
+        pinError.textContent = "❌ Código captcha o PIN incorrecto.";
         pinError.classList.remove("hidden");
-        pinInput.focus();
+        capInput.value = "";
+        refreshCaptcha("teacher");
         return;
       }
+
       pinError.classList.add("hidden");
-      pinInput.value = "";
+      loginBtn.disabled = true;
+      loginBtn.textContent = "⏳ Validando credenciales en servidor...";
+
       roomCode = document.getElementById("roomInput").value.trim().toUpperCase() || "2DAM-2026";
-      currentRole = "teacher";
-      currentUser = "Profesor";
-      saveSession();
-      setupSessionUI();
+
+      try {
+        const url = `${SHEETS_API_URL}?room=${encodeURIComponent(getCleanRoom())}&action=authTeacher`;
+        const res = await fetch(url, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ pin: enteredPin })
+        });
+        const data = await res.json();
+
+        if (data && data.ok) {
+          verifiedTeacherPin = enteredPin;
+          pinInput.value = "";
+          capInput.value = "";
+          currentRole = "teacher";
+          currentUser = "Profesor";
+          if (data.state) {
+            roomState = {
+              status: data.state.status || "waiting",
+              activeAppId: data.state.activeAppId || null,
+              apps: data.state.apps || {}
+            };
+          }
+          saveSession();
+          setupSessionUI();
+        } else {
+          pinError.textContent = "❌ PIN rechazado por el servidor.";
+          pinError.classList.remove("hidden");
+          pinInput.value = "";
+          capInput.value = "";
+          refreshCaptcha("teacher");
+        }
+      } catch (e) {
+        pinError.textContent = "⚠️ Error de red al validar con Google Sheets.";
+        pinError.classList.remove("hidden");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Validar en Servidor y Entrar →";
+      }
     }
 
     function setupSessionUI() {
@@ -661,8 +830,11 @@
       try { localStorage.removeItem("concurso_2dam_session"); } catch (e) {}
       try { sessionStorage.removeItem("concurso_2dam_session"); } catch (e) {}
       currentRole = null;
+      verifiedTeacherPin = "";
       draftScore = 0;
       lastRenderedHash = "";
+      refreshCaptcha("student");
+      refreshCaptcha("teacher");
       document.getElementById("teacherView").classList.add("hidden");
       document.getElementById("studentView").classList.add("hidden");
       document.getElementById("podiumView").classList.add("hidden");
@@ -790,7 +962,7 @@
     // 4. SELECCIÓN PREVIA Y CONFIRMACIÓN ÚNICA DE VOTO DEL ALUMNO
     // =========================================================================
     function sanitizeKey(str) {
-      return str.replace(/[.#$\[\]\/]/g, "_").trim();
+      return str.replace(/[.#$\[\]\/]/g, "_").trim().toLowerCase();
     }
 
     function hasAlreadyVotedApp(app) {
@@ -808,12 +980,8 @@
     function selectDraftVote(score) {
       if (currentRole !== "student") return;
       const activeApp = roomState.activeAppId ? roomState.apps[roomState.activeAppId] : null;
-      if (!activeApp || roomState.status !== "voting") {
-        return;
-      }
-      if (hasAlreadyVotedApp(activeApp)) {
-        return;
-      }
+      if (!activeApp || roomState.status !== "voting") return;
+      if (hasAlreadyVotedApp(activeApp)) return;
       draftScore = Number(score);
       updateDraftUI();
     }
@@ -1220,7 +1388,6 @@
         const st = computeStats(app);
         return { ...app, ...st };
       });
-      // Gana la app con MAYOR PUNTUACIÓN TOTAL (suma de estrellas), desempate por nota media
       apps.sort((a, b) => (b.sum - a.sum) || (b.avg - a.avg));
       return apps;
     }
@@ -1395,7 +1562,7 @@
     }
 
     // =========================================================================
-    // 7. VOTO POR VOZ BLINDADO CON ESTRELLAS VISUALES ("Usted dijo: 3 ★★★☆☆")
+    // 7. VOTO POR VOZ BLINDADO CON ESTRELLAS VISUALES
     // =========================================================================
     let activeRecognition = null;
 
