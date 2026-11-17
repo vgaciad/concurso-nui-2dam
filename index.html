@@ -58,11 +58,6 @@
     </div>
   </header>
 
-  <!-- AVISO SI ESTÁ DENTRO DE GOOGLE SITES IFRAME -->
-  <div id="iframeWarningBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs text-amber-900">
-    ⚠️ <strong>Modo incrustado (Google Sites):</strong> El navegador puede bloquear la webcam y el micrófono dentro de un iframe. Para usar cámara y voz al 100%, ábrelo desde tu alojamiento (Vercel / GitHub Pages / Live Server).
-  </div>
-
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
 
@@ -147,7 +142,6 @@
     <!-- PANTALLA 2: PANEL DEL PROFESOR -->
     <section id="teacherView" class="hidden space-y-6">
       <div class="grid lg:grid-cols-12 gap-6">
-        <!-- Columna Izquierda: Controles y CRUD -->
         <div class="lg:col-span-5 space-y-5">
           <div class="rounded-2xl border-2 border-slate-900 p-5 bg-white shadow-sm">
             <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
@@ -187,14 +181,19 @@
             </h3>
             <p id="teacherCurrentAuthor" class="text-sm text-slate-600">—</p>
 
-            <div class="grid grid-cols-2 gap-3 mt-4">
+            <!-- 3 INDICADORES: PUNTOS TOTALES (CRITERIO GANADOR), MEDIA Y VOTOS RECIBIDOS -->
+            <div class="grid grid-cols-3 gap-2.5 mt-4">
+              <div class="bg-amber-50 p-3 rounded-xl border-2 border-amber-400 text-center">
+                <div id="teacherTotalPoints" class="text-2xl font-black text-amber-700">0</div>
+                <div class="text-[10px] font-extrabold uppercase text-amber-900">Puntos Totales</div>
+              </div>
               <div class="bg-white p-3 rounded-xl border border-slate-200 text-center">
-                <div id="teacherAvgScore" class="text-2xl font-black text-amber-600">0.00</div>
-                <div class="text-[11px] font-bold uppercase text-slate-500">Nota Media / 5</div>
+                <div id="teacherAvgScore" class="text-2xl font-black text-slate-900">0.00</div>
+                <div class="text-[10px] font-bold uppercase text-slate-500">Nota Media / 5</div>
               </div>
               <div class="bg-white p-3 rounded-xl border border-slate-200 text-center">
                 <div id="teacherVoteCount" class="text-2xl font-black text-slate-900">0</div>
-                <div class="text-[11px] font-bold uppercase text-slate-500">Votos Recibidos</div>
+                <div class="text-[10px] font-bold uppercase text-slate-500">Total Votos</div>
               </div>
             </div>
 
@@ -206,16 +205,21 @@
 
               <button onclick="finishContest()"
                 class="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm transition cursor-pointer shadow-sm">
-                🏆 Fin de las Aplicaciones · Mostrar Podio RA
+                🏆 Fin de las Aplicaciones · Mostrar Podio RA 3D
               </button>
             </div>
           </div>
 
           <div class="rounded-2xl border border-slate-200 p-5 bg-white">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-black uppercase tracking-wider text-slate-900">
-                Gestión de Apps (<span id="appsCountLabel">0</span>)
-              </h3>
+              <div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-900">
+                  Gestión de Apps (<span id="appsCountLabel">0</span>)
+                </h3>
+                <p class="text-[11px] text-slate-500">
+                  Votos totales acumulados en sala: <strong id="roomTotalVotesBadge" class="text-slate-900">0</strong>
+                </p>
+              </div>
               <button onclick="resetRoom()" class="text-xs font-bold text-red-600 hover:underline cursor-pointer">
                 Vaciar toda la sala
               </button>
@@ -237,7 +241,7 @@
       </div>
     </section>
 
-    <!-- PANTALLA 3: VISTA DEL ALUMNO (VOTO ÚNICO CON CONFIRMACIÓN) -->
+    <!-- PANTALLA 3: VISTA DEL ALUMNO -->
     <section id="studentView" class="hidden space-y-5">
       <div class="rounded-2xl border-2 border-slate-900 p-5 bg-white shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -252,7 +256,7 @@
           </p>
         </div>
 
-        <div class="px-5 py-3 rounded-2xl border-2 border-slate-200 bg-slate-50 text-center min-w-[150px]">
+        <div class="px-5 py-3 rounded-2xl border-2 border-slate-200 bg-slate-50 text-center min-w-[160px]">
           <div id="studentMyVoteDisplay" class="text-2xl font-black text-amber-600">— / 5</div>
           <div id="studentMyVoteLabel" class="text-[11px] font-bold uppercase text-slate-500">Sin voto enviado</div>
         </div>
@@ -299,11 +303,12 @@
               <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">MediaPipe</span>
             </div>
             <p class="text-xs text-slate-600 mb-3">
-              Levanta de <strong>1 a 5 dedos</strong> frente a la cámara durante 1 s para marcar tu nota.
+              Levanta de <strong>1 a 5 dedos</strong> frente a la cámara durante 0,9 s para marcar tu nota.
             </p>
             <div id="webcamWrapper" class="hidden mb-3 relative rounded-xl overflow-hidden border border-slate-300 bg-black aspect-video">
               <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
-              <div id="gestureOverlay" class="absolute bottom-2 left-2 right-2 bg-white/90 text-slate-900 text-xs font-extrabold px-3 py-1.5 rounded-lg text-center">
+              <canvas id="webcamCanvas" class="absolute inset-0 w-full h-full pointer-events-none scale-x-[-1]"></canvas>
+              <div id="gestureOverlay" class="absolute bottom-2 left-2 right-2 bg-white/95 text-slate-900 text-xs font-extrabold px-3 py-1.5 rounded-lg text-center shadow">
                 Detectando mano...
               </div>
             </div>
@@ -314,19 +319,27 @@
             <p id="webcamErrorMsg" class="hidden text-xs font-semibold text-red-600 mt-2"></p>
           </div>
 
-          <!-- Voz -->
+          <!-- Voz Mejorada con Estrellas Visuales -->
           <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
             <div class="flex items-center justify-between mb-1">
               <h3 class="text-sm font-black text-slate-900">🎙️ Seleccionar por Voz</h3>
               <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">Web Speech</span>
             </div>
             <p class="text-xs text-slate-600 mb-3">
-              Pulsa y di: <em>"uno"</em>, <em>"dos"</em>, <em>"tres"</em>, <em>"cuatro"</em> o <em>"cinco"</em>.
+              Pulsa el botón y di en voz alta: <strong>"uno"</strong>, <strong>"dos"</strong>, <strong>"tres"</strong>, <strong>"cuatro"</strong> o <strong>"cinco"</strong>.
             </p>
             <button id="voiceBtn" onclick="startVoiceVote()"
-              class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition cursor-pointer">
-              🎤 Escuchar número (1–5)
+              class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs tracking-wide transition cursor-pointer flex items-center justify-center gap-2">
+              <span>🎤</span> <span id="voiceBtnLabel">Pulsar y decir número (1–5)</span>
             </button>
+
+            <!-- Cartel visual de resultado de voz -->
+            <div id="voiceResultCard" class="hidden mt-3 p-3 rounded-xl border-2 border-amber-400 bg-amber-50 text-center">
+              <div id="voiceSpokenText" class="text-xs font-extrabold text-slate-800">Usted dijo: 3</div>
+              <div id="voiceStarsVisual" class="text-2xl tracking-widest text-amber-500 mt-0.5">★★★☆☆</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-1">Nota marcada · Pulsa Confirmar Voto arriba</div>
+            </div>
+
             <p id="voiceFeedback" class="text-xs text-center font-semibold text-slate-700 mt-2 hidden"></p>
           </div>
 
@@ -347,30 +360,64 @@
       </div>
     </section>
 
-    <!-- PANTALLA 4: PODIO DEPORTIVO 3D FINAL -->
+    <!-- PANTALLA 4: PODIO ÉPICO DE REALIDAD AUMENTADA 3D + INFORME FINAL -->
     <section id="podiumView" class="hidden space-y-6">
-      <div class="text-center">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-100 text-amber-800 mb-2">
-          Resultados Oficiales · 2º DAM
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-black text-slate-900">
-          🏆 Podio Final del Concurso RA & NUI
-        </h2>
-        <p class="text-sm text-slate-600 mt-1">
-          Clasificación calculada por nota media de todos los votos recibidos en sala.
-        </p>
-      </div>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-100 text-amber-800 mb-1">
+            Ceremonia de Premios RA · 2º DAM · Ganador por Puntuación Total
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            🏆 Podio Épico 3D · Top 3 Aplicaciones
+          </h2>
+        </div>
 
-      <div class="rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-100 h-[440px] relative shadow-md">
-        <div id="podiumSceneContainer" class="w-full h-full"></div>
-      </div>
-
-      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-          <h3 class="font-black text-slate-900 text-sm uppercase tracking-wider">Clasificación Completa</h3>
-          <button id="backToTeacherBtn" onclick="reopenFromPodium()" class="hidden px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold cursor-pointer">
-            ← Volver al Panel de Profesor
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="togglePodiumArBtn" onclick="togglePodiumARCamera()"
+            class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider transition cursor-pointer shadow-sm">
+            📷 Proyectar en Realidad Aumentada (Cámara)
           </button>
+          <button onclick="replayPodiumAnimation()"
+            class="px-3.5 py-2.5 rounded-xl border-2 border-slate-900 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs cursor-pointer">
+            🔄 Repetir Entrada 3D
+          </button>
+        </div>
+      </div>
+
+      <!-- ESCENARIO RA / 3D ÉPICO CON PERSPECTIVA SALIENDO DE LA PANTALLA -->
+      <div class="rounded-2xl border-2 border-slate-900 overflow-hidden bg-slate-950 h-[520px] relative shadow-xl">
+        <video id="podiumArVideo" autoplay playsinline muted class="hidden absolute inset-0 w-full h-full object-cover z-0"></video>
+
+        <div class="absolute top-3 left-3 z-20 flex items-center gap-2">
+          <span id="podiumModeBadge" class="px-3 py-1.5 rounded-xl bg-slate-900/90 text-amber-400 border border-amber-400/40 text-xs font-black backdrop-blur">
+            ✨ Escenario 3D Holográfico · Perspectiva Pop-Out
+          </span>
+        </div>
+
+        <div id="podiumSceneContainer" class="w-full h-full relative z-10"></div>
+      </div>
+
+      <!-- INFORME FINAL COMPLETO (PUNTOS TOTALES, NOTA MEDIA Y VOTOS RECIBIDOS) -->
+      <div class="rounded-2xl border-2 border-slate-900 bg-white overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-black text-slate-900 text-sm uppercase tracking-wider">
+              📊 Informe Final de Evaluación · Clasificación Completa
+            </h3>
+            <p id="finalReportSummary" class="text-xs text-slate-600 mt-0.5">
+              Ordenado por Puntuación Total acumulada (desempate por Nota Media).
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="exportFinalReportCSV()"
+              class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition cursor-pointer shadow-sm">
+              📥 Descargar Informe CSV
+            </button>
+            <button id="backToTeacherBtn" onclick="reopenFromPodium()"
+              class="hidden px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer">
+              ← Volver al Panel de Profesor
+            </button>
+          </div>
         </div>
         <div id="fullRankingList" class="divide-y divide-slate-100"></div>
       </div>
@@ -419,7 +466,6 @@
     let isWriting = false;
     let lastRenderedHash = "";
 
-    // Borrador de voto antes de pulsar "Confirmar y Enviar Voto"
     let draftScore = 0;
     let lastKnownAppId = null;
 
@@ -429,7 +475,6 @@
       apps: {}
     };
 
-    // Identificador único de dispositivo persistente para evitar votos duplicados
     function getDeviceId() {
       let devId = null;
       try { devId = localStorage.getItem("concurso_2dam_device_id"); } catch (e) {}
@@ -541,11 +586,6 @@
     }
 
     function restoreSession() {
-      // Detectar si corre dentro de un iframe (como Google Sites)
-      if (window.self !== window.top) {
-        document.getElementById("iframeWarningBanner").classList.remove("hidden");
-      }
-
       let raw = null;
       try { raw = localStorage.getItem("concurso_2dam_session"); } catch (e) {}
       if (!raw) {
@@ -617,6 +657,7 @@
     function logout() {
       if (pollTimer) clearInterval(pollTimer);
       stopWebcam();
+      stopPodiumARCamera();
       try { localStorage.removeItem("concurso_2dam_session"); } catch (e) {}
       try { sessionStorage.removeItem("concurso_2dam_session"); } catch (e) {}
       currentRole = null;
@@ -723,12 +764,14 @@
         alert("Aún no hay aplicaciones evaluadas para mostrar el podio.");
         return;
       }
+      lastRenderedHash = "";
       roomState.status = "podium";
       renderUI();
       await postToSheets("replaceState", { state: roomState });
     }
 
     async function reopenFromPodium() {
+      stopPodiumARCamera();
       roomState.status = roomState.activeAppId ? "closed" : "waiting";
       renderUI();
       await postToSheets("replaceState", { state: roomState });
@@ -762,12 +805,10 @@
       return false;
     }
 
-    // Paso 1: Preseleccionar puntuación (sin enviar todavía)
     function selectDraftVote(score) {
       if (currentRole !== "student") return;
       const activeApp = roomState.activeAppId ? roomState.apps[roomState.activeAppId] : null;
       if (!activeApp || roomState.status !== "voting") {
-        alert("La votación está cerrada en este momento. Espera a que el profesor abra una app.");
         return;
       }
       if (hasAlreadyVotedApp(activeApp)) {
@@ -781,7 +822,8 @@
       const badge = document.getElementById("draftScoreBadge");
       const btn = document.getElementById("confirmVoteBtn");
       if (draftScore >= 1 && draftScore <= 5) {
-        badge.textContent = `${draftScore} ★ / 5`;
+        const stars = "★".repeat(draftScore) + "☆".repeat(5 - draftScore);
+        badge.textContent = `${draftScore} ${stars}`;
         btn.disabled = false;
       } else {
         badge.textContent = "Ninguna";
@@ -790,7 +832,6 @@
       highlightStudentSelection(draftScore);
     }
 
-    // Paso 2: Confirmar y enviar el voto definitivo (bloquea futuros reintentos)
     async function submitConfirmedVote() {
       if (currentRole !== "student") return;
       const appId = roomState.activeAppId;
@@ -814,7 +855,6 @@
       const userKey = sanitizeKey(currentUser);
       const deviceId = getDeviceId();
 
-      // Bloquear inmediatamente en local y en memoria
       markAppVotedLocally(appId, finalScore);
       if (!roomState.apps[appId].votes) roomState.apps[appId].votes = {};
       if (!roomState.apps[appId].votedDevices) roomState.apps[appId].votedDevices = {};
@@ -822,6 +862,7 @@
       roomState.apps[appId].votedDevices[deviceId] = userKey;
 
       draftScore = 0;
+      document.getElementById("voiceResultCard").classList.add("hidden");
       stopWebcam();
       renderUI();
 
@@ -851,6 +892,7 @@
         renderPodiumView();
         return;
       } else {
+        stopPodiumARCamera();
         document.getElementById("podiumView").classList.add("hidden");
         if (currentRole === "teacher") {
           document.getElementById("teacherView").classList.remove("hidden");
@@ -877,6 +919,7 @@
         statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700";
         document.getElementById("teacherCurrentTitle").textContent = "Ninguna aplicación activa";
         document.getElementById("teacherCurrentAuthor").textContent = "Lanza una aplicación arriba para empezar";
+        document.getElementById("teacherTotalPoints").textContent = "0";
         document.getElementById("teacherAvgScore").textContent = "0.00";
         document.getElementById("teacherVoteCount").textContent = "0";
         toggleBtn.disabled = true;
@@ -884,6 +927,7 @@
         const stats = computeStats(activeApp);
         document.getElementById("teacherCurrentTitle").textContent = activeApp.title;
         document.getElementById("teacherCurrentAuthor").textContent = `Por: ${activeApp.author}`;
+        document.getElementById("teacherTotalPoints").textContent = `${stats.sum} pts`;
         document.getElementById("teacherAvgScore").textContent = stats.avg.toFixed(2);
         document.getElementById("teacherVoteCount").textContent = stats.count;
         toggleBtn.disabled = false;
@@ -901,7 +945,11 @@
       }
 
       const appsList = Object.values(roomState.apps || {}).sort((a, b) => b.createdAt - a.createdAt);
+      const totalRoomVotes = appsList.reduce((acc, app) => acc + computeStats(app).count, 0);
+
       document.getElementById("appsCountLabel").textContent = appsList.length;
+      document.getElementById("roomTotalVotesBadge").textContent = totalRoomVotes;
+
       const listEl = document.getElementById("teacherAppsList");
       if (appsList.length === 0) {
         listEl.innerHTML = `<p class="text-xs text-slate-400">Aún no se ha lanzado ninguna aplicación.</p>`;
@@ -913,7 +961,9 @@
             <div class="p-3 rounded-xl border ${isCurrent ? 'border-amber-500 bg-amber-50/60' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <div class="font-black text-slate-900 text-xs truncate">${app.title}</div>
-                <div class="text-[11px] text-slate-500 truncate">${app.author} · <strong>${st.avg.toFixed(2)}★</strong> (${st.count} votos)</div>
+                <div class="text-[11px] text-slate-600 truncate">
+                  ${app.author} · <strong class="text-amber-700">${st.sum} pts</strong> · Media: <strong>${st.avg.toFixed(2)}★</strong> (${st.count} votos)
+                </div>
               </div>
               <div class="flex items-center gap-1 shrink-0">
                 <button onclick="activateExistingApp('${app.id}')" title="Activar / Reabrir votación"
@@ -944,10 +994,10 @@
       const alreadyBanner = document.getElementById("alreadyVotedBanner");
       const workspace = document.getElementById("studentVotingWorkspace");
 
-      // Si el profesor cambió a otra app nueva, limpiamos el borrador anterior
       if ((activeApp ? activeApp.id : null) !== lastKnownAppId) {
         lastKnownAppId = activeApp ? activeApp.id : null;
         draftScore = 0;
+        document.getElementById("voiceResultCard").classList.add("hidden");
         updateDraftUI();
       }
 
@@ -991,7 +1041,7 @@
       if (roomState.status === "voting") {
         roundBadge.textContent = "🟢 Votación Abierta (1 a 5)";
         roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800 mb-1";
-        myVoteDisplay.textContent = draftScore > 0 ? `${draftScore} ★ (Borrador)` : "— / 5";
+        myVoteDisplay.textContent = draftScore > 0 ? `${draftScore} ★` : "— / 5";
         myVoteLabel.textContent = draftScore > 0 ? "Pulsa Confirmar Voto" : "Pendiente de votar";
       } else {
         roundBadge.textContent = "🔒 Votación Cerrada";
@@ -1028,7 +1078,7 @@
     }
 
     // =========================================================================
-    // 6. ESCENAS A-FRAME 3D
+    // 6. ESCENAS A-FRAME 3D, PODIO RA POP-OUT E INFORME FINAL
     // =========================================================================
     function mountStudentScene() {
       const container = document.getElementById("studentSceneContainer");
@@ -1107,132 +1157,371 @@
       }
     }
 
-    function renderPodiumView() {
+    let podiumArStream = null;
+    let isPodiumArActive = false;
+
+    async function togglePodiumARCamera() {
+      const video = document.getElementById("podiumArVideo");
+      const btn = document.getElementById("togglePodiumArBtn");
+      const badge = document.getElementById("podiumModeBadge");
+
+      if (isPodiumArActive) {
+        stopPodiumARCamera();
+        lastRenderedHash = "";
+        renderPodiumView();
+        return;
+      }
+
+      try {
+        podiumArStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720, facingMode: "environment" }
+        });
+        video.srcObject = podiumArStream;
+        video.classList.remove("hidden");
+        isPodiumArActive = true;
+        btn.textContent = "⏹ Volver a Fondo Holográfico";
+        badge.textContent = "📷 MODO REALIDAD AUMENTADA EN VIVO · Podio sobre Aula";
+        lastRenderedHash = "";
+        renderPodiumView();
+      } catch (err) {
+        alert("No se pudo activar la cámara para Realidad Aumentada. Revisa los permisos del navegador.");
+      }
+    }
+
+    function stopPodiumARCamera() {
+      if (podiumArStream) {
+        podiumArStream.getTracks().forEach(t => t.stop());
+        podiumArStream = null;
+      }
+      const video = document.getElementById("podiumArVideo");
+      if (video) video.classList.add("hidden");
+      isPodiumArActive = false;
+      const btn = document.getElementById("togglePodiumArBtn");
+      if (btn) btn.textContent = "📷 Proyectar en Realidad Aumentada (Cámara)";
+      const badge = document.getElementById("podiumModeBadge");
+      if (badge) badge.textContent = "✨ Escenario 3D Holográfico · Perspectiva Pop-Out";
+    }
+
+    function replayPodiumAnimation() {
+      lastRenderedHash = "";
+      renderPodiumView();
+    }
+
+    function clean3DText(str) {
+      return String(str || "—")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s\-.,()]/g, "")
+        .substring(0, 26);
+    }
+
+    function getSortedAppsForRanking() {
       const apps = Object.values(roomState.apps || {}).map(app => {
         const st = computeStats(app);
         return { ...app, ...st };
       });
+      // Gana la app con MAYOR PUNTUACIÓN TOTAL (suma de estrellas), desempate por nota media
+      apps.sort((a, b) => (b.sum - a.sum) || (b.avg - a.avg));
+      return apps;
+    }
 
-      apps.sort((a, b) => (b.avg - a.avg) || (b.sum - a.sum));
+    function renderPodiumView() {
+      const apps = getSortedAppsForRanking();
 
-      const hash = JSON.stringify(apps.map(a => [a.id, a.title, a.avg.toFixed(2), a.count]));
+      const hash = JSON.stringify([isPodiumArActive, apps.map(a => [a.id, a.title, a.sum, a.avg.toFixed(2), a.count])]);
       if (hash === lastRenderedHash) return;
       lastRenderedHash = hash;
 
-      const first = apps[0] || { title: "—", author: "", avg: 0 };
-      const second = apps[1] || { title: "—", author: "", avg: 0 };
-      const third = apps[2] || { title: "—", author: "", avg: 0 };
+      const first = apps[0] || { title: "Sin ganador", author: "—", sum: 0, avg: 0, count: 0 };
+      const second = apps[1] || { title: "—", author: "—", sum: 0, avg: 0, count: 0 };
+      const third = apps[2] || { title: "—", author: "—", sum: 0, avg: 0, count: 0 };
+
+      const totalApps = apps.length;
+      const totalVotesCast = apps.reduce((acc, a) => acc + a.count, 0);
+      const totalPointsCast = apps.reduce((acc, a) => acc + a.sum, 0);
+      document.getElementById("finalReportSummary").textContent =
+        `Apps evaluadas: ${totalApps} · Total votos emitidos: ${totalVotesCast} · Puntos repartidos: ${totalPointsCast} pts`;
+
+      const particles = Array.from({ length: 18 }, (_, i) => {
+        const px = ((i % 6) - 2.5) * 1.1;
+        const py = 0.5 + (i % 4) * 0.7;
+        const pz = -3.8 + ((i % 3) - 1) * 0.9;
+        const dur = 2500 + (i % 5) * 600;
+        return `
+          <a-octahedron position="${px.toFixed(2)} ${py.toFixed(2)} ${pz.toFixed(2)}" radius="0.045" color="#fbbf24"
+            material="emissive: #f59e0b; emissiveIntensity: 0.8"
+            animation="property: position; to: ${px.toFixed(2)} ${(py + 0.6).toFixed(2)} ${pz.toFixed(2)}; dir: alternate; loop: true; dur: ${dur}; easing: easeInOutSine">
+          </a-octahedron>
+        `;
+      }).join("");
+
+      const skyTag = isPodiumArActive ? "" : `<a-sky color="#090d16"></a-sky>`;
+      const rendererAttr = isPodiumArActive ? `renderer="alpha: true; antialias: true"` : `renderer="antialias: true"`;
 
       const container = document.getElementById("podiumSceneContainer");
       container.innerHTML = `
-        <a-scene embedded vr-mode-ui="enabled: false">
-          <a-sky color="#f8fafc"></a-sky>
-          <a-light type="ambient" intensity="0.95"></a-light>
-          <a-light type="directional" position="3 6 4" intensity="0.85"></a-light>
+        <a-scene embedded ${rendererAttr} vr-mode-ui="enabled: false">
+          ${skyTag}
+          <a-light type="ambient" intensity="1.0"></a-light>
+          <a-light type="directional" position="2 6 4" intensity="1.1" color="#fffbeb"></a-light>
+          <a-light type="point" position="0 3.2 -3.4" intensity="1.8" color="#f59e0b"></a-light>
 
-          <a-box position="0 0 -4.2" width="5.4" height="0.12" depth="2.6" color="#0f172a"></a-box>
-          <a-box position="0 0.07 -4.2" width="4.8" height="0.04" depth="2.1" color="#ffffff"></a-box>
+          <a-entity position="0 0 -3.5" rotation="8 0 0"
+            animation="property: position; from: 0 -1.5 -6.5; to: 0 0 -3.5; dur: 1100; easing: easeOutElastic">
 
-          <a-entity position="-1.45 0.1 -4.2">
-            <a-box position="0 0.55 0" width="1.15" height="1.1" depth="1.0" color="#94a3b8"></a-box>
-            <a-text value="2º PLATA" position="0 0.65 0.52" align="center" color="#ffffff" width="4"></a-text>
-            <a-text value="${second.title}\n(${second.avg.toFixed(2)} ★)" position="0 1.55 0" align="center" color="#0f172a" width="3.4"></a-text>
+            <a-cylinder position="0 0.02 0" radius="2.9" height="0.06" color="#0f172a" material="metalness: 0.7; roughness: 0.2"></a-cylinder>
+            <a-torus position="0 0.06 0" rotation="90 0 0" radius="2.88" radius-tubular="0.03" color="#f59e0b"
+              material="emissive: #f59e0b; emissiveIntensity: 0.9"></a-torus>
+
+            <!-- 2º PUESTO: PLATA -->
+            <a-entity position="-1.55 0.05 0.25" rotation="0 16 0"
+              animation="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; delay: 300; dur: 900; easing: easeOutBack">
+              <a-box position="0 0.65 0" width="1.2" height="1.3" depth="1.05" color="#94a3b8" material="metalness: 0.6; roughness: 0.25"></a-box>
+              <a-box position="0 1.32 0" width="1.26" height="0.06" depth="1.11" color="#e2e8f0"></a-box>
+              <a-text value="2o PLATA" position="0 0.92 0.55" align="center" color="#0f172a" width="4.6"></a-text>
+              <a-text value="${second.sum} pts" position="0 0.58 0.55" align="center" color="#ffffff" width="4.8"></a-text>
+              <a-text value="Media: ${second.avg.toFixed(2)}/5" position="0 0.30 0.55" align="center" color="#f1f5f9" width="3.3"></a-text>
+
+              <a-dodecahedron position="0 1.75 0" radius="0.22" color="#cbd5e1" material="metalness: 0.8; roughness: 0.1"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"></a-dodecahedron>
+
+              <a-plane position="0 2.38 0" width="1.55" height="0.58" color="#0f172a" opacity="0.9"></a-plane>
+              <a-text value="${clean3DText(second.title)}" position="0 2.47 0.02" align="center" color="#f8fafc" width="3.1"></a-text>
+              <a-text value="${clean3DText(second.author)}" position="0 2.25 0.02" align="center" color="#94a3b8" width="2.4"></a-text>
+            </a-entity>
+
+            <!-- 1º PUESTO: ORO ÉPICO -->
+            <a-entity position="0 0.05 0.55"
+              animation="property: scale; from: 0.01 0.01 0.01; to: 1.08 1.08 1.08; delay: 650; dur: 1100; easing: easeOutElastic">
+              <a-box position="0 0.95 0" width="1.38" height="1.9" depth="1.15" color="#f59e0b" material="metalness: 0.5; roughness: 0.2"></a-box>
+              <a-box position="0 1.92 0" width="1.46" height="0.08" depth="1.22" color="#fef08a"></a-box>
+              <a-text value="1o ORO" position="0 1.38 0.60" align="center" color="#0f172a" width="5.5"></a-text>
+              <a-text value="${first.sum} PTS" position="0 0.95 0.60" align="center" color="#ffffff" width="5.8"></a-text>
+              <a-text value="Media: ${first.avg.toFixed(2)} / 5" position="0 0.58 0.60" align="center" color="#fefce8" width="3.8"></a-text>
+
+              <a-cylinder position="0 2.6 0" radius="0.45" height="2.4" color="#fbbf24" opacity="0.16" material="transparent: true"></a-cylinder>
+
+              <a-octahedron position="0 2.42 0" radius="0.30" color="#fbbf24" material="emissive: #f59e0b; emissiveIntensity: 0.45; metalness: 0.8"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 3500; easing: linear"></a-octahedron>
+              <a-torus position="0 2.42 0" rotation="70 0 0" radius="0.44" radius-tubular="0.02" color="#fef08a"
+                animation="property: rotation; to: 70 360 0; loop: true; dur: 4500; easing: linear"></a-torus>
+
+              <a-plane position="0 3.18 0" width="1.85" height="0.68" color="#0f172a" opacity="0.95"></a-plane>
+              <a-text value="${clean3DText(first.title)}" position="0 3.28 0.02" align="center" color="#fbbf24" width="3.6"></a-text>
+              <a-text value="${clean3DText(first.author)}" position="0 3.03 0.02" align="center" color="#e2e8f0" width="2.7"></a-text>
+            </a-entity>
+
+            <!-- 3º PUESTO: BRONCE -->
+            <a-entity position="1.55 0.05 0.25" rotation="0 -16 0"
+              animation="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; delay: 150; dur: 900; easing: easeOutBack">
+              <a-box position="0 0.48 0" width="1.2" height="0.96" depth="1.05" color="#b45309" material="metalness: 0.55; roughness: 0.3"></a-box>
+              <a-box position="0 0.98 0" width="1.26" height="0.06" depth="1.11" color="#fdba74"></a-box>
+              <a-text value="3o BRONCE" position="0 0.72 0.55" align="center" color="#ffffff" width="4.3"></a-text>
+              <a-text value="${third.sum} pts" position="0 0.42 0.55" align="center" color="#fef3c7" width="4.6"></a-text>
+              <a-text value="Media: ${third.avg.toFixed(2)}/5" position="0 0.18 0.55" align="center" color="#ffedd5" width="3.2"></a-text>
+
+              <a-icosahedron position="0 1.38 0" radius="0.20" color="#d97706" material="metalness: 0.75; roughness: 0.2"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5500; easing: linear"></a-icosahedron>
+
+              <a-plane position="0 2.02 0" width="1.55" height="0.58" color="#0f172a" opacity="0.9"></a-plane>
+              <a-text value="${clean3DText(third.title)}" position="0 2.11 0.02" align="center" color="#f8fafc" width="3.1"></a-text>
+              <a-text value="${clean3DText(third.author)}" position="0 1.89 0.02" align="center" color="#fdba74" width="2.4"></a-text>
+            </a-entity>
+
           </a-entity>
 
-          <a-entity position="0 0.1 -4.2">
-            <a-box position="0 0.85 0" width="1.3" height="1.7" depth="1.1" color="#f59e0b"></a-box>
-            <a-text value="1º ORO" position="0 0.95 0.57" align="center" color="#0f172a" width="4.5"></a-text>
-            <a-octahedron position="0 2.05 0" radius="0.22" color="#f59e0b"
-              animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"></a-octahedron>
-            <a-text value="${first.title}\n(${first.avg.toFixed(2)} ★)" position="0 2.65 0" align="center" color="#0f172a" width="4"></a-text>
-          </a-entity>
+          ${particles}
 
-          <a-entity position="1.45 0.1 -4.2">
-            <a-box position="0 0.4 0" width="1.15" height="0.8" depth="1.0" color="#b45309"></a-box>
-            <a-text value="3º BRONCE" position="0 0.45 0.52" align="center" color="#ffffff" width="3.8"></a-text>
-            <a-text value="${third.title}\n(${third.avg.toFixed(2)} ★)" position="0 1.25 0" align="center" color="#0f172a" width="3.4"></a-text>
-          </a-entity>
-
-          <a-entity camera position="0 1.9 0.4" rotation="-10 0 0"></a-entity>
+          <a-entity camera position="0 1.65 0.65" rotation="-6 0 0"></a-entity>
         </a-scene>
       `;
 
       const rankingEl = document.getElementById("fullRankingList");
       rankingEl.innerHTML = apps.map((app, index) => {
         const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+        const isWinner = index === 0;
         return `
-          <div class="px-5 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-xl font-black w-8 text-center">${medal}</span>
+          <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3 ${isWinner ? 'bg-amber-50/70' : ''}">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="text-2xl font-black w-9 text-center">${medal}</span>
               <div>
-                <div class="font-black text-slate-900 text-sm">${app.title}</div>
-                <div class="text-xs text-slate-500">${app.author} · ${app.count} votos</div>
+                <div class="font-black text-slate-900 text-base">${app.title}</div>
+                <div class="text-xs text-slate-600">${app.author} · <strong>${app.count}</strong> votos recibidos</div>
               </div>
             </div>
-            <div class="text-base font-black text-amber-600">${app.avg.toFixed(2)} / 5 ★</div>
+            <div class="flex items-center gap-4 text-right">
+              <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                <div class="text-[10px] font-bold uppercase text-slate-500">Nota Media</div>
+                <div class="text-sm font-black text-slate-900">${app.avg.toFixed(2)} / 5 ★</div>
+              </div>
+              <div class="px-3.5 py-1.5 rounded-xl bg-amber-100 border border-amber-300">
+                <div class="text-[10px] font-extrabold uppercase text-amber-900">Puntuación Total</div>
+                <div class="text-base font-black text-amber-800">${app.sum} pts</div>
+              </div>
+            </div>
           </div>
         `;
       }).join("");
     }
 
+    function exportFinalReportCSV() {
+      const apps = getSortedAppsForRanking();
+      if (apps.length === 0) return;
+
+      const rows = [
+        ["Posicion", "Aplicacion", "Alumno_Equipo", "Puntuacion_Total_Pts", "Nota_Media_Sobre_5", "Total_Votos_Recibidos"]
+      ];
+      apps.forEach((app, idx) => {
+        rows.push([
+          idx + 1,
+          `"${String(app.title).replace(/"/g, '""')}"`,
+          `"${String(app.author).replace(/"/g, '""')}"`,
+          app.sum,
+          app.avg.toFixed(2).replace(".", ","),
+          app.count
+        ]);
+      });
+
+      const csvContent = "\uFEFF" + rows.map(r => r.join(";")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Informe_Concurso_RA_NUI_${getCleanRoom()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
     // =========================================================================
-    // 7. VOTO POR VOZ Y GESTOS WEBCAM (PRESELECCIONA PARA CONFIRMAR)
+    // 7. VOTO POR VOZ BLINDADO CON ESTRELLAS VISUALES ("Usted dijo: 3 ★★★☆☆")
     // =========================================================================
-    function startVoiceVote() {
+    let activeRecognition = null;
+
+    function parseSpokenScore(rawText) {
+      const t = rawText
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+      if (/(^|\s)(1|uno|una|un|punto|primero)(\s|$)/.test(t)) return 1;
+      if (/(^|\s)(2|dos|segundo)(\s|$)/.test(t)) return 2;
+      if (/(^|\s)(3|tres|tercero)(\s|$)/.test(t)) return 3;
+      if (/(^|\s)(4|cuatro|cuarto)(\s|$)/.test(t)) return 4;
+      if (/(^|\s)(5|cinco|quinto|maximo)(\s|$)/.test(t)) return 5;
+      return 0;
+    }
+
+    async function startVoiceVote() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const fb = document.getElementById("voiceFeedback");
+      const resultCard = document.getElementById("voiceResultCard");
+      const btnLabel = document.getElementById("voiceBtnLabel");
+
+      fb.classList.add("hidden");
+
       if (!SpeechRecognition) {
-        fb.textContent = "⚠️ Este navegador no soporta Web Speech API (usa Chrome o Edge).";
+        fb.textContent = "⚠️ Este navegador no soporta reconocimiento de voz (usa Google Chrome o Microsoft Edge).";
+        fb.classList.remove("hidden");
+        return;
+      }
+
+      if (activeRecognition) {
+        try { activeRecognition.abort(); } catch (e) {}
+        activeRecognition = null;
+      }
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          tempStream.getTracks().forEach(track => track.stop());
+        }
+      } catch (micErr) {
+        fb.textContent = "🚫 No se pudo acceder al micrófono. Haz clic en el candado de la barra de direcciones y permite el Micrófono.";
         fb.classList.remove("hidden");
         return;
       }
 
       try {
         const recognition = new SpeechRecognition();
+        activeRecognition = recognition;
         recognition.lang = "es-ES";
+        recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.maxAlternatives = 3;
+        recognition.maxAlternatives = 5;
 
-        fb.textContent = "🎙️ Escuchando... di: uno, dos, tres, cuatro o cinco";
+        btnLabel.textContent = "🔴 Escuchando... habla ahora (1 a 5)";
+        fb.textContent = "🎙️ Di claramente: uno, dos, tres, cuatro o cinco...";
         fb.classList.remove("hidden");
 
         recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript.toLowerCase();
+          btnLabel.textContent = "Pulsar y decir número (1–5)";
           let detected = 0;
-          if (/\b(1|uno|un)\b/.test(transcript)) detected = 1;
-          else if (/\b(2|dos)\b/.test(transcript)) detected = 2;
-          else if (/\b(3|tres)\b/.test(transcript)) detected = 3;
-          else if (/\b(4|cuatro)\b/.test(transcript)) detected = 4;
-          else if (/\b(5|cinco)\b/.test(transcript)) detected = 5;
+          let bestTranscript = "";
 
-          if (detected > 0) {
+          for (let i = 0; i < event.results[0].length; i++) {
+            const candidate = event.results[0][i].transcript;
+            if (!bestTranscript) bestTranscript = candidate;
+            const val = parseSpokenScore(candidate);
+            if (val > 0) {
+              detected = val;
+              bestTranscript = candidate;
+              break;
+            }
+          }
+
+          if (detected >= 1 && detected <= 5) {
             selectDraftVote(detected);
-            fb.textContent = `✅ Detectado "${transcript}" (${detected}★). Pulsa Confirmar Voto arriba.`;
+            const stars = "★".repeat(detected) + "☆".repeat(5 - detected);
+            document.getElementById("voiceSpokenText").textContent = `Usted dijo: "${bestTranscript.trim()}" (${detected} / 5)`;
+            document.getElementById("voiceStarsVisual").textContent = stars;
+            resultCard.classList.remove("hidden");
+            fb.classList.add("hidden");
           } else {
-            fb.textContent = `⚠️ Escuché "${transcript}". Di "uno", "dos", "tres", "cuatro" o "cinco".`;
+            resultCard.classList.add("hidden");
+            fb.textContent = `⚠️ Escuché "${bestTranscript}". Pulsa de nuevo y di un número del 1 al 5.`;
+            fb.classList.remove("hidden");
           }
         };
 
         recognition.onerror = (err) => {
-          if (err.error === "not-allowed") {
-            fb.textContent = "🚫 Micrófono bloqueado por Google Sites (iframe). Ábrelo en Vercel / Live Server.";
+          btnLabel.textContent = "Pulsar y decir número (1–5)";
+          if (err.error === "no-speech") {
+            fb.textContent = "🔇 No se detectó voz. Pulsa el botón y habla cerca del micrófono.";
+          } else if (err.error === "not-allowed") {
+            fb.textContent = "🚫 Permiso de micrófono bloqueado por el navegador.";
+          } else if (err.error === "network") {
+            fb.textContent = "🌐 Error de red del servicio de voz de Chrome. Comprueba tu conexión a Internet.";
           } else {
-            fb.textContent = `⚠️ Error de voz (${err.error}). Inténtalo de nuevo.`;
+            fb.textContent = `⚠️ No se pudo captar la voz (${err.error}). Pulsa de nuevo para reintentar.`;
           }
+          fb.classList.remove("hidden");
+        };
+
+        recognition.onend = () => {
+          btnLabel.textContent = "Pulsar y decir número (1–5)";
+          activeRecognition = null;
         };
 
         recognition.start();
       } catch (e) {
-        fb.textContent = "🚫 El navegador bloqueó el acceso al micrófono en este contexto.";
+        btnLabel.textContent = "Pulsar y decir número (1–5)";
+        fb.textContent = "⚠️ Error al iniciar el micrófono. Recarga la página e inténtalo de nuevo.";
         fb.classList.remove("hidden");
       }
     }
 
+    // =========================================================================
+    // 8. DETECCIÓN VECTORIAL CALIBRADA DE DEDOS (WEBCAM)
+    // =========================================================================
     let webcamStream = null;
     let handLandmarker = null;
     let rafId = null;
     let holdFingerCount = 0;
     let holdStartTime = 0;
+    let fingerHistory = [];
 
     async function toggleWebcam() {
       const errEl = document.getElementById("webcamErrorMsg");
@@ -1244,19 +1533,19 @@
       }
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        errEl.textContent = "🚫 Tu navegador o el iframe de Google Sites no permite acceso a la cámara.";
+        errEl.textContent = "🚫 Tu navegador no permite acceso a la cámara.";
         errEl.classList.remove("hidden");
         return;
       }
 
       const overlay = document.getElementById("gestureOverlay");
       try {
-        webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
         const video = document.getElementById("webcamVideo");
         video.srcObject = webcamStream;
         document.getElementById("webcamWrapper").classList.remove("hidden");
         document.getElementById("webcamBtn").textContent = "⏹ Detener Webcam";
-        overlay.textContent = "Cargando detector de dedos...";
+        overlay.textContent = "Cargando modelo de mano...";
 
         if (!handLandmarker) {
           const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3");
@@ -1269,12 +1558,16 @@
               delegate: "GPU"
             },
             runningMode: "VIDEO",
-            numHands: 1
+            numHands: 1,
+            minHandDetectionConfidence: 0.65,
+            minHandPresenceConfidence: 0.65,
+            minTrackingConfidence: 0.65
           });
         }
+        fingerHistory = [];
         detectHandsLoop();
       } catch (err) {
-        errEl.textContent = "🚫 Cámara bloqueada por Google Sites (iframe) o permiso denegado. Ábrelo desde Vercel / Live Server.";
+        errEl.textContent = "🚫 Permiso de cámara denegado o cámara ocupada por otra app.";
         errEl.classList.remove("hidden");
         stopWebcam();
       }
@@ -1286,52 +1579,129 @@
         webcamStream.getTracks().forEach(t => t.stop());
         webcamStream = null;
       }
+      fingerHistory = [];
       document.getElementById("webcamWrapper").classList.add("hidden");
       document.getElementById("webcamBtn").textContent = "📷 Activar Webcam (1–5 dedos)";
     }
 
+    function dist2D(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
     function countRaisedFingers(landmarks) {
+      const wrist = landmarks[0];
+      const indexMcp = landmarks[5];
+      const pinkyMcp = landmarks[17];
+      const palmSize = Math.max(0.05, dist2D(wrist, landmarks[9]));
+
       let count = 0;
-      const tips = [8, 12, 16, 20];
-      const pips = [6, 10, 14, 18];
-      for (let i = 0; i < 4; i++) {
-        if (landmarks[tips[i]].y < landmarks[pips[i]].y) count++;
+
+      const fingers = [
+        { tip: 8, pip: 6 },
+        { tip: 12, pip: 10 },
+        { tip: 16, pip: 14 },
+        { tip: 20, pip: 18 }
+      ];
+
+      for (const f of fingers) {
+        const tipToWrist = dist2D(landmarks[f.tip], wrist);
+        const pipToWrist = dist2D(landmarks[f.pip], wrist);
+        if (tipToWrist > pipToWrist * 1.18 && landmarks[f.tip].y < landmarks[f.pip].y) {
+          count++;
+        }
       }
-      if (Math.abs(landmarks[4].x - landmarks[2].x) > 0.06) count++;
+
+      const thumbTipToIndexMcp = dist2D(landmarks[4], indexMcp);
+      const thumbIpToIndexMcp = dist2D(landmarks[3], indexMcp);
+      const thumbTipToPinkyMcp = dist2D(landmarks[4], pinkyMcp);
+
+      if (
+        thumbTipToIndexMcp > palmSize * 0.62 &&
+        thumbTipToIndexMcp > thumbIpToIndexMcp * 1.15 &&
+        thumbTipToPinkyMcp > palmSize * 0.95
+      ) {
+        count++;
+      }
+
       return Math.min(5, Math.max(0, count));
+    }
+
+    function getSmoothedFingerCount(rawCount) {
+      fingerHistory.push(rawCount);
+      if (fingerHistory.length > 8) fingerHistory.shift();
+
+      const freq = {};
+      let bestVal = rawCount;
+      let bestFreq = 0;
+      for (const val of fingerHistory) {
+        freq[val] = (freq[val] || 0) + 1;
+        if (freq[val] > bestFreq) {
+          bestFreq = freq[val];
+          bestVal = val;
+        }
+      }
+      return bestFreq >= 5 ? bestVal : null;
+    }
+
+    function drawHandPoints(landmarks, canvas, video) {
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const tips = [4, 8, 12, 16, 20];
+      landmarks.forEach((pt, idx) => {
+        const x = pt.x * canvas.width;
+        const y = pt.y * canvas.height;
+        ctx.beginPath();
+        ctx.arc(x, y, tips.includes(idx) ? 6 : 3, 0, Math.PI * 2);
+        ctx.fillStyle = tips.includes(idx) ? "#f59e0b" : "#10b981";
+        ctx.fill();
+      });
     }
 
     function detectHandsLoop() {
       const video = document.getElementById("webcamVideo");
+      const canvas = document.getElementById("webcamCanvas");
       const overlay = document.getElementById("gestureOverlay");
       if (!webcamStream || !handLandmarker) return;
 
       if (video.readyState >= 2) {
         const results = handLandmarker.detectForVideo(video, performance.now());
         if (results.landmarks && results.landmarks.length > 0) {
-          const fingers = countRaisedFingers(results.landmarks[0]);
-          if (fingers >= 1 && fingers <= 5) {
-            if (fingers === holdFingerCount) {
+          const lm = results.landmarks[0];
+          drawHandPoints(lm, canvas, video);
+
+          const rawFingers = countRaisedFingers(lm);
+          const stableFingers = getSmoothedFingerCount(rawFingers);
+
+          if (stableFingers !== null && stableFingers >= 1 && stableFingers <= 5) {
+            if (stableFingers === holdFingerCount) {
               const elapsed = performance.now() - holdStartTime;
-              const pct = Math.min(100, Math.round((elapsed / 1000) * 100));
-              overlay.textContent = `✋ ${fingers} dedo(s) · Marcando nota ${pct}%`;
-              if (elapsed >= 1000) {
-                selectDraftVote(fingers);
-                overlay.textContent = `✅ Nota ${fingers}★ marcada. Pulsa Confirmar Voto.`;
+              const pct = Math.min(100, Math.round((elapsed / 900) * 100));
+              overlay.textContent = `✋ ${stableFingers} dedo(s) detectado(s) · Marcando ${pct}%`;
+              if (elapsed >= 900) {
+                selectDraftVote(stableFingers);
+                overlay.textContent = `✅ Nota ${stableFingers}★ marcada. Pulsa Confirmar Voto.`;
                 holdStartTime = performance.now() + 1200;
               }
             } else {
-              holdFingerCount = fingers;
+              holdFingerCount = stableFingers;
               holdStartTime = performance.now();
-              overlay.textContent = `✋ ${fingers} dedo(s) · Mantén 1 s...`;
+              overlay.textContent = `✋ ${stableFingers} dedo(s) · Mantén quieto 0,9 s...`;
             }
-          } else {
+          } else if (stableFingers === 0) {
             holdFingerCount = 0;
-            overlay.textContent = "Levanta entre 1 y 5 dedos";
+            overlay.textContent = "Puño cerrado (0) · Levanta de 1 a 5 dedos";
           }
         } else {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          fingerHistory = [];
           holdFingerCount = 0;
-          overlay.textContent = "Muestra tu mano frente a la cámara";
+          overlay.textContent = "Coloca la palma abierta frente a la cámara";
         }
       }
       rafId = requestAnimationFrame(detectHandsLoop);
