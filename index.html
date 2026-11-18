@@ -376,6 +376,34 @@
       </div>
 
       <!-- BANNER DE BLOQUEO CUANDO YA HA VOTADO ESTA APP -->
+      <!-- MODO PRESENTACIÓN: se muestra cuando el profesor cierra la votación -->
+      <div id="presentationBanner" class="hidden relative overflow-hidden rounded-2xl bg-slate-950 text-white p-8 sm:p-10 text-center shadow-lg">
+        <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(600px 260px at 50% 0%, rgba(245,158,11,.22), transparent 70%);"></div>
+        <div class="relative">
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/10 ring-1 ring-white/15">
+            <span class="relative flex w-2 h-2"><span class="absolute inline-flex w-full h-full rounded-full bg-rose-400 opacity-75 animate-ping"></span><span class="relative inline-flex w-2 h-2 rounded-full bg-rose-500"></span></span>
+            En directo
+          </span>
+          <div class="mx-auto mt-5 w-16 h-16 rounded-2xl bg-amber-400/15 ring-1 ring-amber-300/30 text-amber-300 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5v5l4-2.5z" fill="currentColor"/></svg>
+          </div>
+          <h3 class="mt-5 text-2xl sm:text-3xl font-black tracking-tight">Presentación en curso</h3>
+          <p class="mt-2 text-sm sm:text-base text-slate-300 max-w-xl mx-auto">
+            Levanta la vista de la pantalla y presta atención a tu compañero o compañera. Tu voto cuenta, así que valóralo con criterio: la votación se abrirá en cuanto termine.
+          </p>
+          <div class="mt-6 flex flex-wrap justify-center gap-2 text-xs font-semibold">
+            <span class="px-3 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-slate-200">Escena 3D / RA</span>
+            <span class="px-3 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-slate-200">Interacción</span>
+            <span class="px-3 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-slate-200">Voz o gestos</span>
+            <span class="px-3 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-slate-200">Creatividad</span>
+          </div>
+          <p class="mt-6 inline-flex items-center gap-2 text-xs text-slate-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            Esperando a que el profesor abra la votación…
+          </p>
+        </div>
+      </div>
+
       <div id="alreadyVotedBanner" class="hidden rounded-2xl border-2 border-emerald-600 bg-emerald-50 p-5 text-center shadow-sm">
         <div class="text-2xl mb-1">🔒✅</div>
         <h3 class="text-lg font-black text-emerald-950">Tu voto definitivo ya ha sido registrado</h3>
@@ -1299,6 +1327,8 @@
       const myVoteLabel = document.getElementById("studentMyVoteLabel");
       const alreadyBanner = document.getElementById("alreadyVotedBanner");
       const workspace = document.getElementById("studentVotingWorkspace");
+      const presenting = document.getElementById("presentationBanner");
+      presenting.classList.add("hidden");
 
       if ((activeApp ? activeApp.id : null) !== lastKnownAppId) {
         lastKnownAppId = activeApp ? activeApp.id : null;
@@ -1330,6 +1360,21 @@
         : (localVoted[activeApp.id] ? Number(localVoted[activeApp.id]) : 0);
 
       const voted = hasAlreadyVotedApp(activeApp);
+
+      // Votación cerrada = un compañero está presentando: pantalla de atención
+      if (roomState.status === "closed") {
+        if (webcamStream) stopWebcam();
+        roundBadge.textContent = "🎤 Presentación en curso";
+        roundBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-rose-100 text-rose-800 mb-1";
+        titleEl.textContent = "Atentos a la presentación";
+        authorEl.textContent = `La votación de «${activeApp.title}» ya está cerrada.`;
+        myVoteDisplay.textContent = confirmedScore > 0 ? `${confirmedScore} ★ / 5` : (voted ? "Enviado ✓" : "— / 5");
+        myVoteLabel.textContent = voted ? "Tu voto a la app anterior" : "No votaste la app anterior";
+        alreadyBanner.classList.add("hidden");
+        workspace.classList.add("hidden");
+        presenting.classList.remove("hidden");
+        return;
+      }
 
       if (voted) {
         roundBadge.textContent = "✅ Voto Emitido";
