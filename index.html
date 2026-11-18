@@ -20,6 +20,75 @@
       height: 100%;
       display: block;
     }
+
+    /* =====================================================================
+       CAPA DE ESTILO PROFESIONAL (afinado global sin tocar la estructura)
+       ===================================================================== */
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --accent: #f59e0b;
+      --accent-ring: rgba(245, 158, 11, 0.22);
+      --ink-ring: rgba(15, 23, 42, 0.14);
+      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+      --shadow-card-hover: 0 1px 2px rgba(15, 23, 42, 0.05), 0 16px 32px -16px rgba(15, 23, 42, 0.22);
+    }
+    body {
+      background:
+        radial-gradient(1200px 500px at 50% -200px, rgba(245, 158, 11, 0.07), transparent 70%),
+        #f7f8fa;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "cv11", "ss01";
+    }
+
+    /* Tipografía: menos peso, más aire */
+    .font-black { font-weight: 800; letter-spacing: -0.015em; }
+    h2.font-black, h3.font-black { letter-spacing: -0.025em; }
+    .tracking-wider { letter-spacing: 0.06em; }
+
+    /* Bordes finos en lugar de gruesos */
+    .border-2 { border-width: 1px; }
+
+    /* Tarjetas: borde suave + sombra en capas */
+    .rounded-2xl.bg-white { box-shadow: var(--shadow-card); border-color: var(--line); }
+    .rounded-2xl.bg-white.hover\:border-slate-900:hover { border-color: #cbd5e1; box-shadow: var(--shadow-card-hover); }
+    .rounded-2xl.border-slate-900 { border-color: var(--line); }
+    .card-featured { position: relative; overflow: hidden; }
+    .card-featured::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+      background: linear-gradient(90deg, #0f172a, #334155);
+    }
+    .card-accent::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+    /* Campos de formulario */
+    input[type="text"], input[type="password"], select, textarea {
+      background: #fff;
+      border-color: #d7dbe2 !important;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 4px var(--accent-ring);
+    }
+    input::placeholder { color: #9aa3af; font-weight: 500; }
+
+    /* Botones: microinteracciones sobrias */
+    button { transition: background-color .15s ease, box-shadow .15s ease, transform .08s ease, border-color .15s ease; }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ink-ring); }
+    button.bg-amber-500 { box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 6px 16px -8px rgba(245, 158, 11, .6); }
+    button.bg-slate-900 { box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 16px -8px rgba(15, 23, 42, .55); }
+
+    /* Cabecera translúcida */
+    header.sticky { background: rgba(255, 255, 255, 0.82) !important; backdrop-filter: saturate(160%) blur(10px); border-color: var(--line); }
+
+    /* Oculta el botón VR/AR de A-Frame en la escena de votación (tapaba la ayuda inferior) */
+    #studentSceneContainer .a-enter-vr, #studentSceneContainer .a-enter-ar { display: none !important; }
+
+    /* Iconos SVG de las tarjetas */
+    .icon-tile svg { width: 22px; height: 22px; }
+    .icon-btn svg { width: 16px; height: 16px; }
   </style>
 </head>
 <body class="bg-white text-slate-900 min-h-screen flex flex-col">
@@ -28,14 +97,14 @@
   <header class="border-b border-slate-200 bg-white sticky top-0 z-30">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 font-black flex items-center justify-center text-sm shadow-sm">
-          3D
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 text-amber-400 flex items-center justify-center shadow-sm ring-1 ring-black/5">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900">
-            CONCURSO INTERACTIVO NUI & RA · <span class="text-amber-600">2º DAM</span>
+            Concurso Interactivo NUI &amp; RA <span class="text-slate-300 font-semibold">/</span> <span class="text-amber-600">2º DAM</span>
           </h1>
-          <p class="text-xs text-slate-500">Desarrollo de Interfaces · Votación Multimodal en Tiempo Real</p>
+          <p class="text-xs text-slate-500">Desarrollo de Interfaces · Votación multimodal en tiempo real</p>
         </div>
       </div>
 
@@ -64,8 +133,8 @@
     <!-- PANTALLA 1: SELECCIÓN DE ROL CON CAPTCHA DE SEGURIDAD -->
     <section id="loginView" class="max-w-4xl mx-auto py-4">
       <div class="text-center mb-6">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 mb-2">
-          Acceso Verificado · Aula 2º DAM
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white text-slate-600 ring-1 ring-slate-200 shadow-sm mb-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Acceso verificado · Aula 2º DAM
         </span>
         <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
           Elige tu rol para entrar a la sala
@@ -77,7 +146,7 @@
 
       <div class="mb-6 max-w-xs mx-auto">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 text-center">
-          Código de Sala (Aula)
+          Código de sala
         </label>
         <input id="roomInput" type="text" value="2DAM-2026"
           class="w-full text-center font-extrabold tracking-widest uppercase px-4 py-2 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none bg-white text-slate-900" />
@@ -85,21 +154,21 @@
 
       <div class="grid md:grid-cols-2 gap-6">
         <!-- Tarjeta Alumno con Captcha -->
-        <div class="rounded-2xl border-2 border-slate-200 p-6 bg-white shadow-sm hover:border-slate-900 transition flex flex-col justify-between">
+        <div class="card-featured card-accent rounded-2xl border-2 border-slate-200 p-6 bg-white shadow-sm hover:border-slate-900 transition flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-3">
-              <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl">🎓</div>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">1 Voto / Dispositivo</span>
+              <div class="icon-tile w-11 h-11 rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-200/70 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></div>
+              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200">1 voto por dispositivo</span>
             </div>
-            <h3 class="text-xl font-black text-slate-900">Soy Alumno / Jurado</h3>
+            <h3 class="text-xl font-black text-slate-900">Alumno / Jurado</h3>
             <p class="text-xs text-slate-600 mt-1">
-              Introduce tu nombre real y resuelve el código visual para entrar a votar.
+              Escribe tu nombre real y el código de verificación para entrar a votar.
             </p>
 
             <div class="mt-4 space-y-3">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Tu Nombre y Apellido *
+                  Nombre y apellido
                 </label>
                 <input id="studentNameInput" type="text" placeholder="Ej. Laura Martínez"
                   class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 focus:border-amber-600 focus:outline-none text-slate-900 font-semibold text-sm" />
@@ -108,13 +177,13 @@
               <!-- CAPTCHA ALUMNO -->
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Verificación Anti-Bot (Escribe los 4 caracteres)
+                  Verificación · escribe los 4 caracteres
                 </label>
                 <div class="flex items-center gap-2">
                   <canvas id="studentCaptchaCanvas" width="130" height="42" class="rounded-lg border border-slate-300 bg-white shrink-0"></canvas>
                   <button type="button" onclick="refreshCaptcha('student')" title="Generar nuevo código"
-                    class="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">
-                    🔄
+                    class="icon-btn p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                   </button>
                   <input id="studentCaptchaInput" type="text" maxlength="4" placeholder="Código"
                     onkeydown="if(event.key==='Enter') enterAsStudent()"
@@ -129,26 +198,26 @@
 
           <button onclick="enterAsStudent()"
             class="mt-5 w-full py-3.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
-            Verificar y Entrar a Votar →
+            Entrar a votar →
           </button>
         </div>
 
         <!-- Tarjeta Profesor con PIN validado en servidor + Captcha -->
-        <div class="rounded-2xl border-2 border-slate-900 p-6 bg-white shadow-md flex flex-col justify-between">
+        <div class="card-featured rounded-2xl border-2 border-slate-900 p-6 bg-white shadow-md flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-3">
-              <div class="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center text-2xl">👨‍🏫</div>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-900 text-amber-400">Validación</span>
+              <div class="icon-tile w-11 h-11 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200">Validado en servidor</span>
             </div>
-            <h3 class="text-xl font-black text-slate-900">Panel de Profesor</h3>
+            <h3 class="text-xl font-black text-slate-900">Panel del profesor</h3>
             <p class="text-xs text-slate-600 mt-1">
-              Acceso profesor o el administrador de la sala.
+              Acceso para el profesor o el administrador de la sala.
             </p>
 
             <div class="mt-4 space-y-3">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  PIN de Profesor *
+                  PIN del profesor
                 </label>
                 <input id="teacherPinInput" type="password" placeholder="Introduce el PIN docente"
                   class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-slate-900 font-semibold text-sm" />
@@ -157,13 +226,13 @@
               <!-- CAPTCHA PROFESOR -->
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Verificación de Seguridad Docente
+                  Verificación · escribe los 4 caracteres
                 </label>
                 <div class="flex items-center gap-2">
                   <canvas id="teacherCaptchaCanvas" width="130" height="42" class="rounded-lg border border-slate-300 bg-white shrink-0"></canvas>
                   <button type="button" onclick="refreshCaptcha('teacher')" title="Generar nuevo código"
-                    class="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">
-                    🔄
+                    class="icon-btn p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
                   </button>
                   <input id="teacherCaptchaInput" type="text" maxlength="4" placeholder="Código"
                     onkeydown="if(event.key==='Enter') enterAsTeacher()"
@@ -178,7 +247,7 @@
 
           <button id="teacherLoginBtn" onclick="enterAsTeacher()"
             class="mt-5 w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm tracking-wide transition cursor-pointer shadow-sm">
-            Validar en Servidor y Entrar →
+            Entrar al panel →
           </button>
         </div>
       </div>
@@ -870,7 +939,7 @@
         pinError.classList.remove("hidden");
       } finally {
         loginBtn.disabled = false;
-        loginBtn.textContent = "Validar en Servidor y Entrar →";
+        loginBtn.textContent = "Entrar al panel →";
       }
     }
 
